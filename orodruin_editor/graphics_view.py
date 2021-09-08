@@ -1,8 +1,8 @@
+from typing import Optional
+
 from PySide2.QtCore import QEvent, Qt
 from PySide2.QtGui import QMouseEvent, QPainter, QWheelEvent
 from PySide2.QtWidgets import QGraphicsScene, QGraphicsView, QWidget
-
-from typing import Optional
 
 
 class QDMGraphicsView(QGraphicsView):

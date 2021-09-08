@@ -1,4 +1,5 @@
 import sys
+
 from PySide2.QtWidgets import QApplication
 
 from editor_window import OrodruinEditorWindow

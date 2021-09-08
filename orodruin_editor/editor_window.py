@@ -1,8 +1,10 @@
-from orodruin_editor.graphics_view import QDMGraphicsView
-from PySide2.QtGui import QBrush, QPen, Qt
-from orodruin_editor.graphics_scene import QDMGraphicsScene
-from PySide2.QtWidgets import QGraphicsItem, QGraphicsView, QVBoxLayout, QWidget
 from typing import Optional
+
+from PySide2.QtGui import QBrush, QPen, Qt
+from PySide2.QtWidgets import QGraphicsItem, QGraphicsView, QVBoxLayout, QWidget
+
+from orodruin_editor.graphics_scene import QDMGraphicsScene
+from orodruin_editor.graphics_view import QDMGraphicsView
 
 
 class OrodruinEditorWindow(QWidget):
