@@ -1,10 +1,12 @@
 from typing import Optional
 
+from orodruin.component import Component
+from orodruin.port.port import Port, PortDirection
 from PySide2.QtGui import QBrush, QPen, Qt
-from PySide2.QtWidgets import QGraphicsItem, QGraphicsView, QVBoxLayout, QWidget
+from PySide2.QtWidgets import QGraphicsItem, QHBoxLayout, QListView, QWidget
 
-from orodruin_editor.graphics_scene import QDMGraphicsScene
-from orodruin_editor.graphics_view import QDMGraphicsView
+from orodruin_editor.graphics_scene import GraphicsScene
+from orodruin_editor.graphics_view import GraphicsView
 
 
 class OrodruinEditorWindow(QWidget):
@@ -19,26 +21,31 @@ class OrodruinEditorWindow(QWidget):
         self.setWindowTitle("Orodruin Editor")
         self.setGeometry(200, 200, 800, 600)
 
-        self.layout = QVBoxLayout()
+        self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
-        # graphics scene
-        self.graphics_scene = QDMGraphicsScene()
+        root_component = Component.new("root")
+
+        # scene
+        self.graphics_scene = GraphicsScene(root_component)
+
+        component = Component.new(f"Multiply")
+        component.add_port("input1", PortDirection.input, float)
+        component.add_port("input2", PortDirection.input, float)
+        component.add_port("output", PortDirection.output, float)
+        component.set_parent(root_component)
 
         # graphics view
-        self.view = QDMGraphicsView(self.graphics_scene, self)
-        self.view.setScene(self.graphics_scene)
+        self.view = GraphicsView(self.graphics_scene, self)
         self.layout.addWidget(self.view)
-
-        # self.add_debug_content()
 
     def add_debug_content(self):
         green_brush = QBrush(Qt.green)
         outline_pen = QPen(Qt.black)
         outline_pen.setWidth(2)
 
-        rect = self.graphics_scene.addRect(
+        rect = self.scene.graphics_scene.addRect(
             -100,
             -100,
             100,
@@ -48,5 +55,5 @@ class OrodruinEditorWindow(QWidget):
         )
         rect.setFlag(QGraphicsItem.ItemIsMovable)
 
-        text = self.graphics_scene.addText("This is my awesome text!")
+        text = self.scene.graphics_scene.addText("This is my awesome text!")
         text.setFlags(QGraphicsItem.ItemIsMovable)

@@ -1,24 +1,36 @@
-import math
-from typing import Optional
+from __future__ import annotations
 
+import math
+from typing import TYPE_CHECKING, Optional
+
+from orodruin.component import Component
 from PySide2.QtCore import QLine, QObject, QRectF
-from PySide2.QtGui import QBrush, QColor, QPainter, QPen
+from PySide2.QtGui import QColor, QPainter, QPen
 from PySide2.QtWidgets import QGraphicsScene
 
+from orodruin_editor.graphics_component import GraphicsComponent
 
-class QDMGraphicsScene(QGraphicsScene):
+if TYPE_CHECKING:
+    from orodruin_editor.scene import Scene
+
+
+class GraphicsScene(QGraphicsScene):
     def __init__(
         self,
+        component: Component,
         parent: Optional[QObject] = None,
     ) -> None:
         super().__init__(parent=parent)
 
-        # settings
-        self.scene_width = 64000
-        self.scene_height = 64000
+        self.component = component
+        self.component.component_added.subscribe(self.on_component_added)
 
+        # settings
         self.square_size = 50  # in pixels
         self.cell_size = 4  # in squares
+
+        self.scene_width = 64000
+        self.scene_height = 64000
 
         self._color_background = QColor("#2f2f2f")
         self._square_color = QColor("#1a1a1a")
@@ -37,6 +49,14 @@ class QDMGraphicsScene(QGraphicsScene):
         )
 
         self.setBackgroundBrush(self._color_background)
+
+    def init_content(self):
+        for component in self.component.components():
+            self.on_component_added(component)
+
+    def on_component_added(self, component: Component):
+        graphics_component = GraphicsComponent(component)
+        self.addItem(graphics_component)
 
     def drawBackground(
         self,

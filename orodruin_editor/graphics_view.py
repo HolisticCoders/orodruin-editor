@@ -5,7 +5,7 @@ from PySide2.QtGui import QMouseEvent, QPainter, QWheelEvent
 from PySide2.QtWidgets import QGraphicsScene, QGraphicsView, QWidget
 
 
-class QDMGraphicsView(QGraphicsView):
+class GraphicsView(QGraphicsView):
     def __init__(
         self,
         scene: QGraphicsScene,
