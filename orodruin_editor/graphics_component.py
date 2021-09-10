@@ -25,7 +25,8 @@ class GraphicsComponent(QGraphicsItem):
         self.width = 175
         self.border_thickness = 10
         self.name_height = 25
-        self.padding = 5
+        self.name_padding = 5
+        self.bottom_padding = 5
 
         self._pen_default = QPen(QColor("#000000"))
         self._pen_selected = QPen(QColor("#43FCA2"))
@@ -41,7 +42,7 @@ class GraphicsComponent(QGraphicsItem):
 
     @property
     def height(self):
-        return self.name_height + 25 * len(self.component.ports())
+        return self.name_height + self.bottom_padding + 25 * len(self.component.ports())
 
     def init_ui(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
@@ -56,8 +57,8 @@ class GraphicsComponent(QGraphicsItem):
         self.name_item = QGraphicsTextItem(self.component.name(), self)
         self.name_item.setDefaultTextColor(self._name_color)
         self.name_item.setFont(self._name_font)
-        self.name_item.setPos(self.padding, 0)
-        self.name_item.setTextWidth(self.width - 2 * self.padding)
+        self.name_item.setPos(self.name_padding, 0)
+        self.name_item.setTextWidth(self.width - 2 * self.name_padding)
 
     def init_ports(self):
         for i, port in enumerate(self.component.ports()):

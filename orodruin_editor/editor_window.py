@@ -5,6 +5,7 @@ from orodruin.port.port import Port, PortDirection
 from PySide2.QtGui import QBrush, QPen, Qt
 from PySide2.QtWidgets import QGraphicsItem, QHBoxLayout, QListView, QWidget
 
+from orodruin_editor.graphics_connection import GraphicsConnection
 from orodruin_editor.graphics_scene import GraphicsScene
 from orodruin_editor.graphics_view import GraphicsView
 
@@ -25,35 +26,23 @@ class OrodruinEditorWindow(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
-        root_component = Component.new("root")
+        self.root_component = Component.new("root")
 
         # scene
-        self.graphics_scene = GraphicsScene(root_component)
-
-        component = Component.new(f"Multiply")
-        component.add_port("input1", PortDirection.input, float)
-        component.add_port("input2", PortDirection.input, float)
-        component.add_port("output", PortDirection.output, float)
-        component.set_parent(root_component)
+        self.graphics_scene = GraphicsScene(self.root_component)
 
         # graphics view
         self.view = GraphicsView(self.graphics_scene, self)
         self.layout.addWidget(self.view)
 
+        self.add_debug_content()
+
     def add_debug_content(self):
-        green_brush = QBrush(Qt.green)
-        outline_pen = QPen(Qt.black)
-        outline_pen.setWidth(2)
+        component = Component.new(f"Multiply")
+        component.add_port("input1", PortDirection.input, float)
+        component.add_port("input2", PortDirection.input, float)
+        component.add_port("output", PortDirection.output, float)
+        component.set_parent(self.root_component)
 
-        rect = self.scene.graphics_scene.addRect(
-            -100,
-            -100,
-            100,
-            100,
-            outline_pen,
-            green_brush,
-        )
-        rect.setFlag(QGraphicsItem.ItemIsMovable)
-
-        text = self.scene.graphics_scene.addText("This is my awesome text!")
-        text.setFlags(QGraphicsItem.ItemIsMovable)
+        connection = GraphicsConnection()
+        self.graphics_scene.addItem(connection)
