@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Any, Dict, Optional
+from uuid import UUID
 
 from orodruin.component import Component
 from orodruin.port.port import Port
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
-    QGraphicsDropShadowEffect,
     QGraphicsItem,
     QGraphicsTextItem,
     QStyleOptionGraphicsItem,
@@ -22,6 +22,7 @@ class GraphicsComponent(QGraphicsItem):
         super().__init__(parent=parent)
 
         self.component = component
+        self._ports: Dict[UUID, GraphicsPort] = {}
 
         self.width = 175
         self.corner_radius = 5
@@ -69,12 +70,20 @@ class GraphicsComponent(QGraphicsItem):
         for i, port in enumerate(self.component.ports()):
             self.on_port_added(port, i)
 
-    def on_port_added(self, port: Port, index: int):
-        graphics_port = GraphicsPort(port, self)
+    def register_port(self, graphics_port: GraphicsPort) -> None:
+        index = len(self._ports)
+        graphics_port.setParentItem(self)
         graphics_port.setPos(
             0,
             self.name_height + graphics_port.height * index,
         )
+        self._ports[graphics_port.uuid()] = graphics_port
+
+    def unregister_port(self, uuid: UUID) -> None:
+        self._ports.pop(uuid)
+
+    def uuid(self) -> UUID:
+        return self.component.uuid()
 
     def boundingRect(self) -> QRectF:
         return QRectF(
@@ -84,12 +93,25 @@ class GraphicsComponent(QGraphicsItem):
             +self.height,
         )
 
+    def itemChange(
+        self,
+        change: QGraphicsItem.GraphicsItemChange,
+        value: Any,
+    ) -> Any:
+        if change == QGraphicsItem.GraphicsItemChange.ItemSelectedChange:
+            if value:
+                self.setZValue(1)
+            else:
+                self.setZValue(0)
+        return super().itemChange(change, value)
+
     def paint(
         self,
         painter: QPainter,
         option: QStyleOptionGraphicsItem,
         widget: Optional[QWidget],
     ) -> None:
+        # Background
         path_background = QPainterPath()
         path_background.addRoundedRect(
             0,

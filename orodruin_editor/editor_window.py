@@ -1,11 +1,10 @@
 from typing import Optional
 
+import orodruin.command
 from orodruin.component import Component
-from orodruin.port.port import Port, PortDirection
-from PySide2.QtGui import QBrush, QPen, Qt
-from PySide2.QtWidgets import QGraphicsItem, QHBoxLayout, QListView, QWidget
+from orodruin.port.port import PortDirection
+from PySide2.QtWidgets import QHBoxLayout, QWidget
 
-from orodruin_editor.graphics_connection import GraphicsConnection
 from orodruin_editor.graphics_scene import GraphicsScene
 from orodruin_editor.graphics_view import GraphicsView
 
@@ -26,10 +25,10 @@ class OrodruinEditorWindow(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
-        self.root_component = Component.new("root")
+        self.root_component = Component("root")
 
         # scene
-        self.graphics_scene = GraphicsScene(self.root_component)
+        self.graphics_scene = GraphicsScene(self.root_component.graph())
 
         # graphics view
         self.view = GraphicsView(self.graphics_scene, self)
@@ -38,11 +37,45 @@ class OrodruinEditorWindow(QWidget):
         self.add_debug_content()
 
     def add_debug_content(self):
-        component = Component.new(f"Multiply")
-        component.add_port("input1", PortDirection.input, float)
-        component.add_port("input2", PortDirection.input, float)
-        component.add_port("output", PortDirection.output, float)
-        component.set_parent(self.root_component)
+        for i in range(2):
+            command = orodruin.command.CreateComponent(
+                self.root_component.graph(), f"Component {i:0>3}"
+            )
+            command.do()
 
-        connection = GraphicsConnection()
-        self.graphics_scene.addItem(connection)
+            component = list(self.root_component.graph().components().values())[-1]
+
+            command = orodruin.command.CreatePort(
+                self.root_component.graph(),
+                component,
+                "input 1",
+                PortDirection.input,
+                int,
+            )
+            command.do()
+
+            command = orodruin.command.CreatePort(
+                self.root_component.graph(),
+                component,
+                "input 2",
+                PortDirection.input,
+                int,
+            )
+            command.do()
+
+            command = orodruin.command.CreatePort(
+                self.root_component.graph(),
+                component,
+                "output",
+                PortDirection.output,
+                int,
+            )
+            command.do()
+
+        port = list(self.root_component.graph().ports().values())[-1]
+        command = orodruin.command.DeletePort(
+            self.root_component.graph(),
+            port.uuid(),
+        )
+        command.do()
+        command.undo()
