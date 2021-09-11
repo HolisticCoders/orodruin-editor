@@ -5,6 +5,7 @@ from orodruin.port.port import Port
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
+    QGraphicsDropShadowEffect,
     QGraphicsItem,
     QGraphicsTextItem,
     QStyleOptionGraphicsItem,
@@ -23,17 +24,18 @@ class GraphicsComponent(QGraphicsItem):
         self.component = component
 
         self.width = 175
-        self.border_thickness = 10
-        self.name_height = 25
-        self.name_padding = 5
+        self.corner_radius = 5
+        self.name_height = 30
+        self.padding = 5
         self.bottom_padding = 5
 
-        self._pen_default = QPen(QColor("#000000"))
-        self._pen_selected = QPen(QColor("#43FCA2"))
+        self._pen_default = QPen(QColor("#101010"))
+        self._pen_default.setWidth(2)
+        self._pen_selected = QPen(QColor("#f5b933"))
         self._pen_selected.setWidth(2)
 
-        self._brush_name = QBrush(QColor("#3F4F81"))
-        self._brush_background = QBrush(QColor("#2E4076"))
+        self._brush_name = QBrush(QColor("#2B6299"))
+        self._brush_background = QBrush(QColor("#333333"))
 
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
@@ -57,8 +59,11 @@ class GraphicsComponent(QGraphicsItem):
         self.name_item = QGraphicsTextItem(self.component.name(), self)
         self.name_item.setDefaultTextColor(self._name_color)
         self.name_item.setFont(self._name_font)
-        self.name_item.setPos(self.name_padding, 0)
-        self.name_item.setTextWidth(self.width - 2 * self.name_padding)
+        self.name_item.setPos(
+            self.padding,
+            self.name_height / 2 - self.name_item.boundingRect().height() / 2,
+        )
+        self.name_item.setTextWidth(self.width - 2 * self.padding)
 
     def init_ports(self):
         for i, port in enumerate(self.component.ports()):
@@ -91,8 +96,8 @@ class GraphicsComponent(QGraphicsItem):
             0,
             self.width,
             self.height,
-            self.border_thickness,
-            self.border_thickness,
+            self.corner_radius,
+            self.corner_radius,
         )
         painter.setPen(Qt.NoPen)
         painter.setBrush(self._brush_background)
@@ -106,20 +111,20 @@ class GraphicsComponent(QGraphicsItem):
             0,
             self.width,
             self.name_height,
-            self.border_thickness,
-            self.border_thickness,
+            self.corner_radius,
+            self.corner_radius,
         )
         path_name.addRect(
             0,
-            self.name_height - self.border_thickness,
-            self.border_thickness,
-            self.border_thickness,
+            self.name_height - self.corner_radius,
+            self.corner_radius,
+            self.corner_radius,
         )
         path_name.addRect(
-            self.width - self.border_thickness,
-            self.name_height - self.border_thickness,
-            self.border_thickness,
-            self.border_thickness,
+            self.width - self.corner_radius,
+            self.name_height - self.corner_radius,
+            self.corner_radius,
+            self.corner_radius,
         )
         painter.setPen(Qt.NoPen)
         painter.setBrush(self._brush_name)
@@ -131,8 +136,8 @@ class GraphicsComponent(QGraphicsItem):
             0,
             self.width,
             self.height,
-            self.border_thickness,
-            self.border_thickness,
+            self.corner_radius,
+            self.corner_radius,
         )
         pen = self._pen_default if not self.isSelected() else self._pen_selected
         painter.setPen(pen)

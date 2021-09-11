@@ -26,18 +26,18 @@ class GraphicsScene(QGraphicsScene):
         self.component.component_added.subscribe(self.on_component_added)
 
         # settings
-        self.square_size = 50  # in pixels
-        self.cell_size = 4  # in squares
+        self.square_size = 25  # in pixels
+        self.cell_size = 10  # in squares
 
         self.scene_width = 64000
         self.scene_height = 64000
 
-        self._color_background = QColor("#2f2f2f")
-        self._square_color = QColor("#1a1a1a")
-        self._cell_color = QColor("#1a1a1a")
+        self._color_background = QColor("#191919")
+        self._square_color = QColor("#2f2f2f")
+        self._cell_color = QColor("#2f2f2f")
 
         self._pen_square = QPen(self._square_color)
-        self._pen_square.setWidth(1)
+        self._pen_square.setWidthF(0.5)
         self._pen_cell = QPen(self._cell_color)
         self._pen_cell.setWidth(2)
 

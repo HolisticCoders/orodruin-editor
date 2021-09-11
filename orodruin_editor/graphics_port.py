@@ -27,11 +27,12 @@ class GraphicsPort(QGraphicsItem):
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
 
-        self._color_outline = Qt.black
-        self._color_background = QColor("#7A996B")
+        self._color_outline = QColor("#101010")
+
+        self._color_background = QColor(Qt.white)
 
         self._pen = QPen(self._color_outline)
-        self._pen.setWidth(1)
+        self._pen.setWidth(2)
         self._brush = QBrush(self._color_background)
 
         self.init_ui()
@@ -96,3 +97,6 @@ class GraphicsPort(QGraphicsItem):
             2 * self.radius,
             2 * self.radius,
         )
+
+    def plug_position(self):
+        return self.scenePos()
