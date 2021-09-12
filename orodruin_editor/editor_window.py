@@ -37,18 +37,18 @@ class OrodruinEditorWindow(QWidget):
         self.add_debug_content()
 
     def add_debug_content(self):
+        components = []
         for i in range(2):
             command = orodruin.command.CreateComponent(
                 self.root_component.graph(), f"Component {i:0>3}"
             )
-            command.do()
-
-            component = list(self.root_component.graph().components().values())[-1]
+            component = command.do()
+            components.append(component)
 
             command = orodruin.command.CreatePort(
                 self.root_component.graph(),
                 component,
-                "input 1",
+                "input1",
                 PortDirection.input,
                 int,
             )
@@ -57,7 +57,7 @@ class OrodruinEditorWindow(QWidget):
             command = orodruin.command.CreatePort(
                 self.root_component.graph(),
                 component,
-                "input 2",
+                "input2",
                 PortDirection.input,
                 int,
             )
@@ -72,10 +72,8 @@ class OrodruinEditorWindow(QWidget):
             )
             command.do()
 
-        port = list(self.root_component.graph().ports().values())[-1]
-        command = orodruin.command.DeletePort(
+        orodruin.command.ConnectPorts(
             self.root_component.graph(),
-            port.uuid(),
-        )
-        command.do()
-        command.undo()
+            components[0].output,
+            components[1].input1,
+        ).do()
