@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 from uuid import UUID
 
 from orodruin import Component, Graph
+from orodruin.connection import Connection
 from orodruin.port.port import Port
 from PySide2.QtCore import QLine, QObject, QRectF
 from PySide2.QtGui import QColor, QPainter, QPen
@@ -13,6 +14,7 @@ from PySide2.QtWidgets import QGraphicsScene
 
 from orodruin_editor import graphics_component
 from orodruin_editor.graphics_component import GraphicsComponent
+from orodruin_editor.graphics_connection import GraphicsConnection
 from orodruin_editor.graphics_port import GraphicsPort
 
 
@@ -29,10 +31,12 @@ class GraphicsScene(QGraphicsScene):
         self.graph.component_unregistered.subscribe(self.on_component_unregistered)
         self.graph.port_registered.subscribe(self.on_port_registered)
         self.graph.port_unregistered.subscribe(self.on_port_unregistered)
+        self.graph.connection_registered.subscribe(self.on_connection_registered)
+        self.graph.connection_unregistered.subscribe(self.on_connection_unregistered)
 
         self._components: Dict[UUID, GraphicsComponent] = {}
         self._ports: Dict[UUID, GraphicsPort] = {}
-        # self._components: Dict[UUID, GraphicsComponent] = {}
+        self._connections: Dict[UUID, GraphicsConnection] = {}
 
         # settings
         self.square_size = 25  # in pixels
@@ -75,6 +79,12 @@ class GraphicsScene(QGraphicsScene):
     def on_port_unregistered(self, port: Port):
         self.unregister_port(port.uuid())
 
+    def on_connection_registered(self, connection: Connection):
+        self.register_connection(connection)
+
+    def on_connection_unregistered(self, connection: Connection):
+        self.unregister_connection(connection.uuid())
+
     def register_component(self, component: Component) -> None:
         graphics_component = GraphicsComponent(component)
         self.addItem(graphics_component)
@@ -87,7 +97,6 @@ class GraphicsScene(QGraphicsScene):
     def register_port(self, port: Port) -> None:
         graphics_component = self._components[port.component().uuid()]
         graphics_port = GraphicsPort(port, graphics_component)
-        # self.addItem(graphics_port)
         graphics_component.register_port(graphics_port)
         self._ports[port.uuid()] = graphics_port
 
@@ -96,6 +105,23 @@ class GraphicsScene(QGraphicsScene):
         graphics_component = graphics_port.graphics_component()
         graphics_component.unregister_port(uuid)
         self.removeItem(graphics_port)
+
+    def register_connection(self, connection: Connection) -> None:
+        source_id = connection.source().uuid()
+        target_id = connection.target().uuid()
+
+        source_graphics_port = self._ports[source_id]
+        target_graphics_port = self._ports[target_id]
+
+        graphics_connection = GraphicsConnection(
+            source_graphics_port, target_graphics_port
+        )
+        self.addItem(graphics_connection)
+        self._connections[connection.uuid()] = graphics_connection
+
+    def unregister_connection(self, uuid: UUID) -> None:
+        graphics_connection = self._connections.pop(uuid)
+        self.removeItem(graphics_connection)
 
     def drawBackground(
         self,

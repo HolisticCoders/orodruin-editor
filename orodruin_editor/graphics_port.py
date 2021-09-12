@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from orodruin.port.port import Port, PortDirection
-from PySide2.QtCore import QRectF, Qt
+from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
     QGraphicsItem,
@@ -54,6 +54,20 @@ class GraphicsPort(QGraphicsItem):
 
     def graphics_component(self) -> GraphicsComponent:
         return self._graphics_component
+
+    def port_position(self) -> QPointF:
+        """Local position of the Port"""
+        horizontal_offset = (
+            0 if self._port.direction() is PortDirection.input else self.width
+        )
+        return QPointF(
+            horizontal_offset,
+            self.height / 2,
+        )
+
+    def scene_port_position(self) -> QPointF:
+        """Global position of the Port, used to attach Connections to."""
+        return self.scenePos() + self.port_position()
 
     def init_ui(self):
         pass

@@ -111,6 +111,7 @@ class GraphicsComponent(QGraphicsItem):
         option: QStyleOptionGraphicsItem,
         widget: Optional[QWidget],
     ) -> None:
+
         # Background
         path_background = QPainterPath()
         path_background.addRoundedRect(
