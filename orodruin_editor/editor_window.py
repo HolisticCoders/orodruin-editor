@@ -1,6 +1,6 @@
 from typing import Optional
 
-import orodruin.command
+import orodruin.commands
 from orodruin.component import Component
 from orodruin.port.port import PortDirection
 from PySide2.QtWidgets import QHBoxLayout, QWidget
@@ -39,13 +39,13 @@ class OrodruinEditorWindow(QWidget):
     def add_debug_content(self):
         components = []
         for i in range(2):
-            command = orodruin.command.CreateComponent(
+            command = orodruin.commands.CreateComponent(
                 self.root_component.graph(), f"Component {i:0>3}"
             )
             component = command.do()
             components.append(component)
 
-            command = orodruin.command.CreatePort(
+            command = orodruin.commands.CreatePort(
                 self.root_component.graph(),
                 component,
                 "input1",
@@ -54,7 +54,7 @@ class OrodruinEditorWindow(QWidget):
             )
             command.do()
 
-            command = orodruin.command.CreatePort(
+            command = orodruin.commands.CreatePort(
                 self.root_component.graph(),
                 component,
                 "input2",
@@ -63,7 +63,7 @@ class OrodruinEditorWindow(QWidget):
             )
             command.do()
 
-            command = orodruin.command.CreatePort(
+            command = orodruin.commands.CreatePort(
                 self.root_component.graph(),
                 component,
                 "output",
@@ -72,7 +72,7 @@ class OrodruinEditorWindow(QWidget):
             )
             command.do()
 
-        orodruin.command.ConnectPorts(
+        orodruin.commands.ConnectPorts(
             self.root_component.graph(),
             components[0].output,
             components[1].input1,
