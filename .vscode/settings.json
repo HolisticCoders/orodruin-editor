@@ -12,5 +12,10 @@
 		}
 	},
 	"python.linting.enabled": true,
-	"python.linting.pylintEnabled": true
+	"python.linting.pylintEnabled": true,
+	"python.linting.pylintUseMinimalCheckers": false,
+	"cSpell.words": [
+		"Orodruin",
+		"Roboto"
+	],
 }

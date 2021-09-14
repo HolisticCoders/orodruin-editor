@@ -6,18 +6,15 @@ from uuid import UUID
 from orodruin.port.port import Port, PortDirection
 from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
-from PySide2.QtWidgets import (
-    QGraphicsItem,
-    QGraphicsTextItem,
-    QStyleOptionGraphicsItem,
-    QWidget,
-)
+from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 if TYPE_CHECKING:
     from orodruin_editor.graphics_component import GraphicsComponent
 
 
 class GraphicsPort(QGraphicsItem):
+    """Graphical representation of an Orodruin Port."""
+
     def __init__(
         self,
         port: Port,
@@ -44,15 +41,16 @@ class GraphicsPort(QGraphicsItem):
         self._pen.setWidth(2)
         self._brush = QBrush(self._color_background)
 
-        self.init_ui()
-
     def uuid(self) -> UUID:
+        """UUID of this graphics port."""
         return self._port.uuid()
 
     def port(self) -> Port:
+        """Getter for this graphics port's orodruin port."""
         return self._port
 
     def graphics_component(self) -> GraphicsComponent:
+        """Getter for this graphics port's graphics component."""
         return self._graphics_component
 
     def port_position(self) -> QPointF:
@@ -69,16 +67,6 @@ class GraphicsPort(QGraphicsItem):
         """Global position of the Port, used to attach Connections to."""
         return self.scenePos() + self.port_position()
 
-    def init_ui(self):
-        pass
-
-    def init_name(self):
-        self.name_item = QGraphicsTextItem(self._port.name(), self)
-        self.name_item.setDefaultTextColor(self._name_color)
-        self.name_item.setFont(self._name_font)
-        self.name_item.setPos(self.padding, 0)
-        self.name_item.setTextWidth(self.width - 2 * self.padding)
-
     def boundingRect(self) -> QRectF:
         return QRectF(
             0,
@@ -90,8 +78,8 @@ class GraphicsPort(QGraphicsItem):
     def paint(
         self,
         painter: QPainter,
-        option: QStyleOptionGraphicsItem,
-        widget: Optional[QWidget],
+        option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
+        widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
         painter.setBrush(self._brush)
         painter.setPen(self._pen)
@@ -113,7 +101,6 @@ class GraphicsPort(QGraphicsItem):
             horizontal_offset,
             -2 + self._name_font.pointSize() / 2.0 + self.height / 2,
         )
-        path_name.boundingRect
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(self._name_color))
         painter.drawPath(path_name)
@@ -129,6 +116,3 @@ class GraphicsPort(QGraphicsItem):
             2 * self.radius,
             2 * self.radius,
         )
-
-    def plug_position(self):
-        return self.scenePos()

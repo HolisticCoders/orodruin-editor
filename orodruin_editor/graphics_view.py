@@ -6,6 +6,8 @@ from PySide2.QtWidgets import QGraphicsScene, QGraphicsView, QWidget
 
 
 class GraphicsView(QGraphicsView):
+    """GraphicsView for the orodruin editor."""
+
     def __init__(
         self,
         scene: QGraphicsScene,
@@ -13,13 +15,11 @@ class GraphicsView(QGraphicsView):
     ) -> None:
         super().__init__(scene, parent=parent)
 
-        self.init_ui()
         self.setScene(scene)
 
         self.zoom_in_factor = 1.25
         self.zoom_step = 1
 
-    def init_ui(self):
         self.setRenderHints(
             QPainter.Antialiasing
             | QPainter.HighQualityAntialiasing

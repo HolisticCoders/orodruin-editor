@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from orodruin.component import Component
-from orodruin.port.port import Port
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
@@ -16,6 +15,8 @@ from orodruin_editor.graphics_port import GraphicsPort
 
 
 class GraphicsComponent(QGraphicsItem):
+    """Graphical representation of an Orodruin Component."""
+
     def __init__(
         self, component: Component, parent: Optional[QGraphicsItem] = None
     ) -> None:
@@ -30,6 +31,9 @@ class GraphicsComponent(QGraphicsItem):
         self.padding = 5
         self.bottom_padding = 5
 
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
         self._pen_default = QPen(QColor("#101010"))
         self._pen_default.setWidth(2)
         self._pen_selected = QPen(QColor("#f5b933"))
@@ -41,36 +45,26 @@ class GraphicsComponent(QGraphicsItem):
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
 
-        self.init_ui()
+        self._name_item = QGraphicsTextItem(self.component.name(), self)
+        self._name_item.setDefaultTextColor(self._name_color)
+        self._name_item.setFont(self._name_font)
+        self._name_item.setTextWidth(self.width - 2 * self.padding)
+        self._name_item.setPos(
+            self.padding,
+            self.name_height / 2 - self._name_item.boundingRect().height() / 2,
+        )
 
     @property
     def height(self):
+        """Height of the graphics component."""
         return self.name_height + self.bottom_padding + 25 * len(self.component.ports())
 
-    def init_ui(self):
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.init_content()
-
-    def init_content(self):
-        self.init_name()
-        self.init_ports()
-
-    def init_name(self):
-        self.name_item = QGraphicsTextItem(self.component.name(), self)
-        self.name_item.setDefaultTextColor(self._name_color)
-        self.name_item.setFont(self._name_font)
-        self.name_item.setPos(
-            self.padding,
-            self.name_height / 2 - self.name_item.boundingRect().height() / 2,
-        )
-        self.name_item.setTextWidth(self.width - 2 * self.padding)
-
-    def init_ports(self):
-        for i, port in enumerate(self.component.ports()):
-            self.on_port_added(port, i)
-
     def register_port(self, graphics_port: GraphicsPort) -> None:
+        """Register a graphics port to this graphics component.
+
+        Args:
+            graphics_port: Graphics port to register.
+        """
         index = len(self._ports)
         graphics_port.setParentItem(self)
         graphics_port.setPos(
@@ -80,9 +74,15 @@ class GraphicsComponent(QGraphicsItem):
         self._ports[graphics_port.uuid()] = graphics_port
 
     def unregister_port(self, uuid: UUID) -> None:
+        """Unregister a graphics port from this graphics component.
+
+        Args:
+            uuid: UUID of the port to unregister.
+        """
         self._ports.pop(uuid)
 
     def uuid(self) -> UUID:
+        """UUID of this graphics component."""
         return self.component.uuid()
 
     def boundingRect(self) -> QRectF:
@@ -108,8 +108,8 @@ class GraphicsComponent(QGraphicsItem):
     def paint(
         self,
         painter: QPainter,
-        option: QStyleOptionGraphicsItem,
-        widget: Optional[QWidget],
+        option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
+        widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
 
         # Background

@@ -10,14 +10,13 @@ from orodruin_editor.graphics_view import GraphicsView
 
 
 class OrodruinEditorWindow(QWidget):
+    """Window class for the orodruin editor."""
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent=parent)
-        self.init_ui()
-
-    def init_ui(self):
         self.setWindowTitle("Orodruin Editor")
         self.setGeometry(200, 200, 800, 600)
 
@@ -37,6 +36,7 @@ class OrodruinEditorWindow(QWidget):
         self.add_debug_content()
 
     def add_debug_content(self):
+        """Add debug content to the scene."""
         components = []
         for i in range(2):
             command = orodruin.commands.CreateComponent(
