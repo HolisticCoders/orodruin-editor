@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
+from uuid import UUID
 
 from orodruin.port.port import Port, PortDirection
-from PySide2.QtCore import QRectF, Qt
+from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
     QGraphicsItem,
@@ -12,12 +13,20 @@ from PySide2.QtWidgets import (
     QWidget,
 )
 
+if TYPE_CHECKING:
+    from orodruin_editor.graphics_component import GraphicsComponent
+
 
 class GraphicsPort(QGraphicsItem):
-    def __init__(self, port: Port, parent: Optional[QGraphicsItem] = None) -> None:
-        super().__init__(parent=parent)
+    def __init__(
+        self,
+        port: Port,
+        graphics_component: GraphicsComponent,
+    ) -> None:
+        super().__init__(parent=graphics_component)
 
-        self.port = port
+        self._port = port
+        self._graphics_component = graphics_component
 
         self.width = 175
         self.height = 25
@@ -37,11 +46,34 @@ class GraphicsPort(QGraphicsItem):
 
         self.init_ui()
 
+    def uuid(self) -> UUID:
+        return self._port.uuid()
+
+    def port(self) -> Port:
+        return self._port
+
+    def graphics_component(self) -> GraphicsComponent:
+        return self._graphics_component
+
+    def port_position(self) -> QPointF:
+        """Local position of the Port"""
+        horizontal_offset = (
+            0 if self._port.direction() is PortDirection.input else self.width
+        )
+        return QPointF(
+            horizontal_offset,
+            self.height / 2,
+        )
+
+    def scene_port_position(self) -> QPointF:
+        """Global position of the Port, used to attach Connections to."""
+        return self.scenePos() + self.port_position()
+
     def init_ui(self):
         pass
 
     def init_name(self):
-        self.name_item = QGraphicsTextItem(self.port.name(), self)
+        self.name_item = QGraphicsTextItem(self._port.name(), self)
         self.name_item.setDefaultTextColor(self._name_color)
         self.name_item.setFont(self._name_font)
         self.name_item.setPos(self.padding, 0)
@@ -69,12 +101,12 @@ class GraphicsPort(QGraphicsItem):
             0,
             0,
             self._name_font,
-            self.port.name(),
+            self._port.name(),
         )
 
         horizontal_offset = (
             self.padding
-            if self.port.direction() is PortDirection.input
+            if self._port.direction() is PortDirection.input
             else self.width - path_name.boundingRect().width() - self.padding
         )
         path_name.translate(
@@ -87,7 +119,7 @@ class GraphicsPort(QGraphicsItem):
         painter.drawPath(path_name)
 
         horizontal_offset = (
-            0 if self.port.direction() is PortDirection.input else self.width
+            0 if self._port.direction() is PortDirection.input else self.width
         )
         painter.setPen(self._pen)
         painter.setBrush(self._brush)

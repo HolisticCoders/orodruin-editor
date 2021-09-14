@@ -1,5 +1,8 @@
-from typing import Optional
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Optional
+
+from orodruin import Connection
 from PySide2.QtCore import QPointF
 from PySide2.QtGui import QPainter, QPainterPath, QPen, Qt
 from PySide2.QtWidgets import (
@@ -9,24 +12,35 @@ from PySide2.QtWidgets import (
     QWidget,
 )
 
+if TYPE_CHECKING:
+    from .graphics_port import GraphicsPort
+
 
 class GraphicsConnection(QGraphicsPathItem):
     def __init__(
         self,
+        source_graphics_port: GraphicsPort,
+        target_graphics_port: GraphicsPort,
         parent: Optional[QGraphicsItem] = None,
     ) -> None:
         super().__init__(parent=parent)
 
-        self.source_position = (0, 0)
-        self.destination_position = (100, 100)
+        self.source_graphics_port = source_graphics_port
+        self.target_graphics_port = target_graphics_port
 
-        self._unselected_pen = QPen(Qt.black)
+        self._unselected_pen = QPen(Qt.white)
         self._selected_pen = QPen(Qt.yellow)
         self._unselected_pen.setWidth(2)
         self._selected_pen.setWidth(2)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setZValue(-1)
+
+    def source_position(self) -> QPointF:
+        return self.source_graphics_port.scene_port_position()
+
+    def target_position(self) -> QPointF:
+        return self.target_graphics_port.scene_port_position()
 
     def paint(
         self,
@@ -41,6 +55,6 @@ class GraphicsConnection(QGraphicsPathItem):
         painter.drawPath(self.path())
 
     def update_path(self):
-        path = QPainterPath(QPointF(self.source_position[0], self.source_position[1]))
-        path.lineTo(self.destination_position[0], self.destination_position[1])
+        path = QPainterPath(self.source_position())
+        path.lineTo(self.target_position())
         self.setPath(path)

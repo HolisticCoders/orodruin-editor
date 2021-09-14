@@ -1,29 +1,42 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Dict, Optional
+from uuid import UUID
 
-from orodruin.component import Component
+from orodruin import Component, Graph
+from orodruin.connection import Connection
+from orodruin.port.port import Port
 from PySide2.QtCore import QLine, QObject, QRectF
 from PySide2.QtGui import QColor, QPainter, QPen
 from PySide2.QtWidgets import QGraphicsScene
 
+from orodruin_editor import graphics_component
 from orodruin_editor.graphics_component import GraphicsComponent
-
-if TYPE_CHECKING:
-    from orodruin_editor.scene import Scene
+from orodruin_editor.graphics_connection import GraphicsConnection
+from orodruin_editor.graphics_port import GraphicsPort
 
 
 class GraphicsScene(QGraphicsScene):
     def __init__(
         self,
-        component: Component,
+        graph: Graph,
         parent: Optional[QObject] = None,
     ) -> None:
         super().__init__(parent=parent)
 
-        self.component = component
-        self.component.component_added.subscribe(self.on_component_added)
+        self.graph = graph
+        self.graph.component_registered.subscribe(self.on_component_registered)
+        self.graph.component_unregistered.subscribe(self.on_component_unregistered)
+        self.graph.port_registered.subscribe(self.on_port_registered)
+        self.graph.port_unregistered.subscribe(self.on_port_unregistered)
+        self.graph.connection_registered.subscribe(self.on_connection_registered)
+        self.graph.connection_unregistered.subscribe(self.on_connection_unregistered)
+
+        self._components: Dict[UUID, GraphicsComponent] = {}
+        self._ports: Dict[UUID, GraphicsPort] = {}
+        self._connections: Dict[UUID, GraphicsConnection] = {}
 
         # settings
         self.square_size = 25  # in pixels
@@ -52,11 +65,63 @@ class GraphicsScene(QGraphicsScene):
 
     def init_content(self):
         for component in self.component.components():
-            self.on_component_added(component)
+            self.on_component_registered(component)
 
-    def on_component_added(self, component: Component):
+    def on_component_registered(self, component: Component):
+        self.register_component(component)
+
+    def on_component_unregistered(self, component: Component):
+        self.unregister_component(component.uuid())
+
+    def on_port_registered(self, port: Port):
+        self.register_port(port)
+
+    def on_port_unregistered(self, port: Port):
+        self.unregister_port(port.uuid())
+
+    def on_connection_registered(self, connection: Connection):
+        self.register_connection(connection)
+
+    def on_connection_unregistered(self, connection: Connection):
+        self.unregister_connection(connection.uuid())
+
+    def register_component(self, component: Component) -> None:
         graphics_component = GraphicsComponent(component)
         self.addItem(graphics_component)
+        self._components[component.uuid()] = graphics_component
+
+    def unregister_component(self, uuid: UUID) -> None:
+        graphics_component = self._components.pop(uuid)
+        self.removeItem(graphics_component)
+
+    def register_port(self, port: Port) -> None:
+        graphics_component = self._components[port.component().uuid()]
+        graphics_port = GraphicsPort(port, graphics_component)
+        graphics_component.register_port(graphics_port)
+        self._ports[port.uuid()] = graphics_port
+
+    def unregister_port(self, uuid: UUID) -> None:
+        graphics_port = self._ports.pop(uuid)
+        graphics_component = graphics_port.graphics_component()
+        graphics_component.unregister_port(uuid)
+        self.removeItem(graphics_port)
+
+    def register_connection(self, connection: Connection) -> None:
+        source_id = connection.source().uuid()
+        target_id = connection.target().uuid()
+
+        source_graphics_port = self._ports[source_id]
+        target_graphics_port = self._ports[target_id]
+
+        graphics_connection = GraphicsConnection(
+            source_graphics_port, target_graphics_port
+        )
+        self.addItem(graphics_connection)
+        self._connections[connection.uuid()] = graphics_connection
+
+    def unregister_connection(self, uuid: UUID) -> None:
+        graphics_connection = self._connections.pop(uuid)
+        self.removeItem(graphics_connection)
 
     def drawBackground(
         self,
