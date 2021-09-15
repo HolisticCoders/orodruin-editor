@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
+import orodruin.commands
+from orodruin.port.port import PortDirection
 from PySide2.QtCore import QEvent, QRectF, Qt
 from PySide2.QtGui import (
     QBrush,
@@ -12,6 +14,10 @@ from PySide2.QtGui import (
     QWheelEvent,
 )
 from PySide2.QtWidgets import QGraphicsView
+
+from .graphics_component import GraphicsComponent
+from .graphics_connection import GraphicsConnection
+from .graphics_port import GraphicsPort
 
 if TYPE_CHECKING:
     from orodruin_editor.gui.editor_window import OrodruinEditorWindow
@@ -44,27 +50,33 @@ class GraphicsView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.MiddleButton:
-            self.setDragMode(QGraphicsView.ScrollHandDrag)
-            press_event = QMouseEvent(
-                QEvent.MouseButtonPress,
-                event.localPos(),
-                event.screenPos(),
-                Qt.LeftButton,
-                Qt.NoButton,
-                event.modifiers(),
-            )
-            self.mousePressEvent(press_event)
+        self._temporary_connection: Optional[GraphicsConnection] = None
 
-        else:
-            super().mousePressEvent(event)
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            self.on_left_mouse_pressed(event)
+        elif event.button() == Qt.RightButton:
+            self.on_right_mouse_pressed(event)
+        elif event.button() == Qt.MiddleButton:
+            self.on_middle_mouse_pressed(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.MiddleButton:
-            self.setDragMode(QGraphicsView.NoDrag)
-        else:
-            super().mouseReleaseEvent(event)
+        if event.button() == Qt.LeftButton:
+            self.on_left_mouse_released(event)
+        elif event.button() == Qt.RightButton:
+            self.on_right_mouse_released(event)
+        elif event.button() == Qt.MiddleButton:
+            self.on_middle_mouse_released(event)
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            self.on_left_mouse_double_clicked(event)
+        elif event.button() == Qt.RightButton:
+            self.on_right_mouse_double_clicked(event)
+        elif event.button() == Qt.MiddleButton:
+            self.on_middle_mouse_double_clicked(event)
+
+        super().mouseDoubleClickEvent(event)
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         if event.angleDelta().y() > 0:
@@ -73,11 +85,104 @@ class GraphicsView(QGraphicsView):
             zoom_factor = 1 / self.zoom_in_factor
         self.scale(zoom_factor, zoom_factor)
 
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if self._temporary_connection:
+            self._temporary_connection.mouse_position = self.mapToScene(event.pos())
+            self._temporary_connection.update_path()
+        return super().mouseMoveEvent(event)
+
+    def on_left_mouse_pressed(self, event: QMouseEvent):
+        """Handle left mouse button pressed event."""
+        item = self.itemAt(event.pos())
+        print(item)
+        if isinstance(item, GraphicsPort):
+            self._temporary_connection = GraphicsConnection(item)
+            self.scene().addItem(self._temporary_connection)
+        else:
+            super().mousePressEvent(event)
+
+    def on_right_mouse_pressed(self, event: QMouseEvent):
+        """Handle right mouse button pressed event."""
+        super().mousePressEvent(event)
+
+    def on_middle_mouse_pressed(self, event: QMouseEvent):
+        """Handle middle mouse button pressed event."""
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        press_event = QMouseEvent(
+            QEvent.MouseButtonPress,
+            event.localPos(),
+            event.screenPos(),
+            Qt.LeftButton,
+            Qt.NoButton,
+            event.modifiers(),
+        )
+        self.mousePressEvent(press_event)
+
+    def on_left_mouse_released(self, event: QMouseEvent):
+        """Handle left mouse button released event."""
+        if self._temporary_connection:
+            item = self.itemAt(event.pos())
+            print(item)
+
+            if isinstance(item, GraphicsPort):
+                if item.port().direction is PortDirection.input:
+                    source = self._temporary_connection.source_graphics_port.port()
+                    target = item.port()
+                else:
+                    source = item.port()
+                    target = self._temporary_connection.source_graphics_port.port()
+                orodruin.commands.ConnectPorts(
+                    self.window.active_scene.graph,
+                    source,
+                    target,
+                ).do()
+
+            self.scene().removeItem(self._temporary_connection)
+            self._temporary_connection = None
+
+        else:
+            super().mouseReleaseEvent(event)
+
+    def on_right_mouse_released(self, event: QMouseEvent):
+        """Handle right mouse button released event."""
+        super().mouseReleaseEvent(event)
+
+    def on_middle_mouse_released(self, event: QMouseEvent):
+        """Handle middle mouse button released event."""
+        self.setDragMode(QGraphicsView.NoDrag)
+        super().mouseReleaseEvent(event)
+
+    def on_left_mouse_double_clicked(self, event: QMouseEvent):
+        """Handle left mouse button double click event."""
+        item = self.itemAt(event.pos())
+
+        if item is None:
+            parent_component = (
+                self.window.active_scene.graph.parent_component().parent_component()
+            )
+            if parent_component:
+                self.window.set_active_scene(
+                    self.graph.parent_component().parent_component()
+                )
+        elif isinstance(item, GraphicsComponent):
+            self.window.set_active_scene(item.component)
+
+        super().mouseDoubleClickEvent(event)
+
+    def on_right_mouse_double_clicked(self, event: QMouseEvent):
+        """Handle right mouse button double click event."""
+        super().mouseDoubleClickEvent(event)
+
+    def on_middle_mouse_double_clicked(self, event: QMouseEvent):
+        """Handle middle mouse button double click event."""
+        super().mouseDoubleClickEvent(event)
+
     def drawForeground(
         self,
         painter: QPainter,
         rect: QRectF,  # pylint: disable=unused-argument
     ) -> None:
+        """Draw Path of the currently active component"""
         area = self.mapToScene(self.viewport().geometry()).boundingRect()
 
         path_name = QPainterPath()

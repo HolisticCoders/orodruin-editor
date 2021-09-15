@@ -20,8 +20,8 @@ class GraphicsConnection(QGraphicsPathItem):
 
     def __init__(
         self,
-        source_graphics_port: GraphicsPort,
-        target_graphics_port: GraphicsPort,
+        source_graphics_port: Optional[GraphicsPort] = None,
+        target_graphics_port: Optional[GraphicsPort] = None,
         parent: Optional[QGraphicsItem] = None,
     ) -> None:
         super().__init__(parent=parent)
@@ -37,13 +37,27 @@ class GraphicsConnection(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setZValue(-1)
 
+        self.mouse_position = QPointF(0, 0)
+
     def source_position(self) -> QPointF:
         """Returns the position of the source graphics port."""
-        return self.source_graphics_port.scene_port_position()
+        if self.source_graphics_port:
+            return self.source_graphics_port.scene_port_position()
+        else:
+            return self.mouse_position
 
     def target_position(self) -> QPointF:
         """Returns the position of the target graphics port."""
-        return self.target_graphics_port.scene_port_position()
+        if self.target_graphics_port:
+            return self.target_graphics_port.scene_port_position()
+        else:
+            return self.mouse_position
+
+    def update_path(self):
+        """Update the path."""
+        path = QPainterPath(self.source_position())
+        path.lineTo(self.target_position())
+        self.setPath(path)
 
     def paint(
         self,
@@ -51,10 +65,7 @@ class GraphicsConnection(QGraphicsPathItem):
         option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
         widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
-        path = QPainterPath(self.source_position())
-        path.lineTo(self.target_position())
-        self.setPath(path)
-
+        self.update_path()
         pen = self._unselected_pen if not self.isSelected() else self._selected_pen
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)

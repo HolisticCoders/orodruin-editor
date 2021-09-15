@@ -68,11 +68,14 @@ class GraphicsPort(QGraphicsItem):
         return self.scenePos() + self.port_position()
 
     def boundingRect(self) -> QRectF:
+        horizontal_offset = (
+            0 if self._port.direction() is PortDirection.input else self.width
+        )
         return QRectF(
-            0,
-            0,
-            self.width,
-            self.height,
+            -self.radius + horizontal_offset,
+            -self.radius + self.height / 2,
+            2 * self.radius,
+            2 * self.radius,
         )
 
     def paint(

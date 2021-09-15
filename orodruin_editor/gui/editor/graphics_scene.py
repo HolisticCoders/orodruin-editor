@@ -133,6 +133,7 @@ class GraphicsScene(QGraphicsScene):
         Args:
             connection: Orodruin Connection to register a graphics connection for.
         """
+        print("Registring Connection")
         # TODO: Fix connections not created to the parent component
         try:
             source_id = connection.source().uuid()
