@@ -6,12 +6,13 @@ from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
     QGraphicsItem,
+    QGraphicsSceneMouseEvent,
     QGraphicsTextItem,
     QStyleOptionGraphicsItem,
     QWidget,
 )
 
-from orodruin_editor.graphics_port import GraphicsPort
+from .graphics_port import GraphicsPort
 
 
 class GraphicsComponent(QGraphicsItem):
@@ -166,3 +167,9 @@ class GraphicsComponent(QGraphicsItem):
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path_background.simplified())
+
+    def mouseDoubleClickEvent(
+        self,
+        event: QGraphicsSceneMouseEvent,  # pylint: disable=unused-argument
+    ) -> None:
+        self.scene().window.set_active_scene(self.component)

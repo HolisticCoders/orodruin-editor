@@ -9,7 +9,7 @@ from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 if TYPE_CHECKING:
-    from orodruin_editor.graphics_component import GraphicsComponent
+    from .graphics_component import GraphicsComponent
 
 
 class GraphicsPort(QGraphicsItem):

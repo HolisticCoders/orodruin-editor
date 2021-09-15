@@ -1,8 +1,20 @@
-from typing import Optional
+from __future__ import annotations
 
-from PySide2.QtCore import QEvent, Qt
-from PySide2.QtGui import QMouseEvent, QPainter, QWheelEvent
-from PySide2.QtWidgets import QGraphicsScene, QGraphicsView, QWidget
+from typing import TYPE_CHECKING
+
+from PySide2.QtCore import QEvent, QRectF, Qt
+from PySide2.QtGui import (
+    QBrush,
+    QFont,
+    QMouseEvent,
+    QPainter,
+    QPainterPath,
+    QWheelEvent,
+)
+from PySide2.QtWidgets import QGraphicsView
+
+if TYPE_CHECKING:
+    from orodruin_editor.gui.editor_window import OrodruinEditorWindow
 
 
 class GraphicsView(QGraphicsView):
@@ -10,15 +22,15 @@ class GraphicsView(QGraphicsView):
 
     def __init__(
         self,
-        scene: QGraphicsScene,
-        parent: Optional[QWidget],
+        window: OrodruinEditorWindow,
     ) -> None:
-        super().__init__(scene, parent=parent)
+        super().__init__(parent=window)
 
-        self.setScene(scene)
-
+        self.window = window
         self.zoom_in_factor = 1.25
         self.zoom_step = 1
+
+        self._path_font = QFont("Roboto", 20)
 
         self.setRenderHints(
             QPainter.Antialiasing
@@ -60,3 +72,21 @@ class GraphicsView(QGraphicsView):
         else:
             zoom_factor = 1 / self.zoom_in_factor
         self.scale(zoom_factor, zoom_factor)
+
+    def drawForeground(
+        self,
+        painter: QPainter,
+        rect: QRectF,  # pylint: disable=unused-argument
+    ) -> None:
+        area = self.mapToScene(self.viewport().geometry()).boundingRect()
+
+        path_name = QPainterPath()
+        path_name.addText(
+            area.x() + 25,
+            area.y() + 40,
+            self._path_font,
+            str(self.scene().graph.parent_component().path()),
+        )
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(Qt.darkGray))
+        painter.drawPath(path_name)

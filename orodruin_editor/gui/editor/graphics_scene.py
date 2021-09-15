@@ -1,19 +1,26 @@
 from __future__ import annotations
 
+import logging
 import math
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 from uuid import UUID
 
 from orodruin import Component, Graph
 from orodruin.connection import Connection
 from orodruin.port.port import Port
 from PySide2.QtCore import QLine, QObject, QRectF
-from PySide2.QtGui import QColor, QPainter, QPen
-from PySide2.QtWidgets import QGraphicsScene
+from PySide2.QtGui import QColor, QPainter, QPen, QTransform
+from PySide2.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent
 
-from orodruin_editor.graphics_component import GraphicsComponent
-from orodruin_editor.graphics_connection import GraphicsConnection
-from orodruin_editor.graphics_port import GraphicsPort
+from .graphics_component import GraphicsComponent
+from .graphics_connection import GraphicsConnection
+from .graphics_port import GraphicsPort
+
+if TYPE_CHECKING:
+    from ..editor_window import OrodruinEditorWindow
+
+
+logger = logging.getLogger(__name__)
 
 
 class GraphicsScene(QGraphicsScene):
@@ -21,10 +28,13 @@ class GraphicsScene(QGraphicsScene):
 
     def __init__(
         self,
+        window: OrodruinEditorWindow,
         graph: Graph,
         parent: Optional[QObject] = None,
     ) -> None:
         super().__init__(parent=parent)
+
+        self.window = window
 
         self.graph = graph
         self.graph.component_registered.subscribe(self.register_component)
@@ -62,6 +72,19 @@ class GraphicsScene(QGraphicsScene):
         )
 
         self.setBackgroundBrush(self._color_background)
+
+        self._init_content()
+
+    def _init_content(self):
+        """Create all the graphics components, ports and connections in the graph."""
+        for component in self.graph.components():
+            self.register_component(component)
+
+        for port in self.graph.ports():
+            self.register_port(port)
+
+        for connection in self.graph.connections():
+            self.register_connection(connection)
 
     def register_component(self, component: Component) -> None:
         """Register a graphics component to the scene.
@@ -110,17 +133,24 @@ class GraphicsScene(QGraphicsScene):
         Args:
             connection: Orodruin Connection to register a graphics connection for.
         """
-        source_id = connection.source().uuid()
-        target_id = connection.target().uuid()
+        # TODO: Fix connections not created to the parent component
+        try:
+            source_id = connection.source().uuid()
+            target_id = connection.target().uuid()
 
-        source_graphics_port = self._ports[source_id]
-        target_graphics_port = self._ports[target_id]
+            source_graphics_port = self._ports[source_id]
+            target_graphics_port = self._ports[target_id]
 
-        graphics_connection = GraphicsConnection(
-            source_graphics_port, target_graphics_port
-        )
-        self.addItem(graphics_connection)
-        self._connections[connection.uuid()] = graphics_connection
+            graphics_connection = GraphicsConnection(
+                source_graphics_port, target_graphics_port
+            )
+            self.addItem(graphics_connection)
+            self._connections[connection.uuid()] = graphics_connection
+        except:
+            logger.warning(
+                "Could not create graphical connection between "
+                f"{connection.source().path()} and {connection.source().path()}"
+            )
 
     def unregister_connection(self, uuid: UUID) -> None:
         """Unregister a graphics connection from the scene.
@@ -164,3 +194,16 @@ class GraphicsScene(QGraphicsScene):
         painter.drawLines(square_lines)
         painter.setPen(self._pen_cell)
         painter.drawLines(cell_lines)
+
+    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        """Change the active scene to this scene's parent"""
+        pos = event.pos()
+        item = self.itemAt(pos.x(), pos.y(), QTransform())
+
+        if not item:
+            parent_component = self.graph.parent_component().parent_component()
+            if parent_component:
+                self.window.set_active_scene(
+                    self.graph.parent_component().parent_component()
+                )
+        return super().mouseDoubleClickEvent(event)

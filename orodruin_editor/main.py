@@ -1,7 +1,8 @@
 import sys
 
-from editor_window import OrodruinEditorWindow
 from PySide2.QtWidgets import QApplication
+
+from orodruin_editor.gui.editor_window import OrodruinEditorWindow
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
