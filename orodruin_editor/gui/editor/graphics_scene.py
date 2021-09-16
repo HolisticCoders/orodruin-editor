@@ -96,13 +96,13 @@ class GraphicsScene(QGraphicsScene):
         self.addItem(graphics_component)
         self._components[component.uuid()] = graphics_component
 
-    def unregister_component(self, uuid: UUID) -> None:
+    def unregister_component(self, component: Component) -> None:
         """Unregister a component from the scene
 
         Args:
             uuid: UUID of the Orodruin Component.
         """
-        graphics_component = self._components.pop(uuid)
+        graphics_component = self._components.pop(component.uuid())
         self.removeItem(graphics_component)
 
     def register_port(self, port: Port) -> None:
@@ -116,12 +116,13 @@ class GraphicsScene(QGraphicsScene):
         graphics_component.register_port(graphics_port)
         self._ports[port.uuid()] = graphics_port
 
-    def unregister_port(self, uuid: UUID) -> None:
+    def unregister_port(self, port: Port) -> None:
         """Unregister a graphics port from the scene.
 
         Args:
             uuid: UUID of the Orodruin Port.
         """
+        uuid = port.uuid()
         graphics_port = self._ports.pop(uuid)
         graphics_component = graphics_port.graphics_component()
         graphics_component.unregister_port(uuid)
@@ -147,19 +148,25 @@ class GraphicsScene(QGraphicsScene):
             self.addItem(graphics_connection)
             self._connections[connection.uuid()] = graphics_connection
         except Exception:
-            logger.warning(
+            logger.error(
                 "Could not create graphical connection between "
                 f"{connection.source().path()} and {connection.source().path()}"
             )
 
-    def unregister_connection(self, uuid: UUID) -> None:
+    def unregister_connection(self, connection: Connection) -> None:
         """Unregister a graphics connection from the scene.
 
         Args:
             uuid: UUID of the Orodruin Connection.
         """
-        graphics_connection = self._connections.pop(uuid)
-        self.removeItem(graphics_connection)
+        try:
+            graphics_connection = self._connections.pop(connection.uuid())
+            self.removeItem(graphics_connection)
+        except Exception:
+            logger.error(
+                "Could not delete graphical connection between "
+                f"{connection.source().path()} and {connection.source().path()}"
+            )
 
     def drawBackground(
         self,
