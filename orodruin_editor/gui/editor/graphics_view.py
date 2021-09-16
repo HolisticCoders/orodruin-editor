@@ -9,6 +9,7 @@ from PySide2.QtCore import QEvent, QRectF, Qt
 from PySide2.QtGui import (
     QBrush,
     QFont,
+    QKeyEvent,
     QMouseEvent,
     QPainter,
     QPainterPath,
@@ -51,6 +52,8 @@ class GraphicsView(QGraphicsView):
         )
 
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+
+        self.setDragMode(QGraphicsView.RubberBandDrag)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -95,6 +98,11 @@ class GraphicsView(QGraphicsView):
             self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self._temporary_connection.update_path()
         return super().mouseMoveEvent(event)
+
+    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_Delete:
+            self.on_del_released(event)
+        super().keyReleaseEvent(event)
 
     def on_left_mouse_pressed(self, event: QMouseEvent):
         """Handle left mouse button pressed event."""
@@ -148,7 +156,6 @@ class GraphicsView(QGraphicsView):
 
             self.scene().removeItem(self._temporary_connection)
             self._temporary_connection = None
-
         else:
             super().mouseReleaseEvent(event)
 
@@ -158,8 +165,16 @@ class GraphicsView(QGraphicsView):
 
     def on_middle_mouse_released(self, event: QMouseEvent):
         """Handle middle mouse button released event."""
-        self.setDragMode(QGraphicsView.NoDrag)
-        super().mouseReleaseEvent(event)
+        fake_event = QMouseEvent(
+            event.type(),
+            event.localPos(),
+            event.screenPos(),
+            Qt.LeftButton,
+            event.buttons() & ~Qt.LeftButton,
+            event.modifiers(),
+        )
+        super().mouseReleaseEvent(fake_event)
+        self.setDragMode(QGraphicsView.RubberBandDrag)
 
     def on_left_mouse_double_clicked(self, event: QMouseEvent):
         """Handle left mouse button double click event."""
@@ -186,6 +201,22 @@ class GraphicsView(QGraphicsView):
     def on_middle_mouse_double_clicked(self, event: QMouseEvent):
         """Handle middle mouse button double click event."""
         super().mouseDoubleClickEvent(event)
+
+    def on_del_released(self, event: QKeyEvent):
+        """Handle del key released event."""
+        selected_items = self.scene().selectedItems()
+        for item in selected_items:
+            if isinstance(item, GraphicsComponent):
+                orodruin.commands.DeleteComponent(
+                    self.window.active_scene.graph,
+                    item.uuid(),
+                ).do()
+            if isinstance(item, GraphicsConnection):
+                orodruin.commands.DisconnectPorts(
+                    self.window.active_scene.graph,
+                    item.source_graphics_port.port(),
+                    item.target_graphics_port.port(),
+                ).do()
 
     def drawForeground(
         self,
