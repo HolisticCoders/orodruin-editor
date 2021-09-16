@@ -9,8 +9,8 @@ from orodruin import Component, Graph
 from orodruin.connection import Connection
 from orodruin.port.port import Port
 from PySide2.QtCore import QLine, QObject, QRectF
-from PySide2.QtGui import QColor, QPainter, QPen, QTransform
-from PySide2.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent
+from PySide2.QtGui import QColor, QPainter, QPen
+from PySide2.QtWidgets import QGraphicsScene
 
 from .graphics_component import GraphicsComponent
 from .graphics_connection import GraphicsConnection
@@ -133,7 +133,6 @@ class GraphicsScene(QGraphicsScene):
         Args:
             connection: Orodruin Connection to register a graphics connection for.
         """
-        print("Registring Connection")
         # TODO: Fix connections not created to the parent component
         try:
             source_id = connection.source().uuid()
@@ -147,7 +146,7 @@ class GraphicsScene(QGraphicsScene):
             )
             self.addItem(graphics_connection)
             self._connections[connection.uuid()] = graphics_connection
-        except:
+        except Exception:
             logger.warning(
                 "Could not create graphical connection between "
                 f"{connection.source().path()} and {connection.source().path()}"
@@ -195,16 +194,3 @@ class GraphicsScene(QGraphicsScene):
         painter.drawLines(square_lines)
         painter.setPen(self._pen_cell)
         painter.drawLines(cell_lines)
-
-    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        """Change the active scene to this scene's parent"""
-        pos = event.pos()
-        item = self.itemAt(pos.x(), pos.y(), QTransform())
-
-        if not item:
-            parent_component = self.graph.parent_component().parent_component()
-            if parent_component:
-                self.window.set_active_scene(
-                    self.graph.parent_component().parent_component()
-                )
-        return super().mouseDoubleClickEvent(event)

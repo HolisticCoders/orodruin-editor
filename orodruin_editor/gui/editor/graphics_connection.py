@@ -41,17 +41,15 @@ class GraphicsConnection(QGraphicsPathItem):
 
     def source_position(self) -> QPointF:
         """Returns the position of the source graphics port."""
-        if self.source_graphics_port:
-            return self.source_graphics_port.scene_port_position()
-        else:
+        if not self.source_graphics_port:
             return self.mouse_position
+        return self.source_graphics_port.scene_port_position()
 
     def target_position(self) -> QPointF:
         """Returns the position of the target graphics port."""
-        if self.target_graphics_port:
-            return self.target_graphics_port.scene_port_position()
-        else:
+        if not self.target_graphics_port:
             return self.mouse_position
+        return self.target_graphics_port.scene_port_position()
 
     def update_path(self):
         """Update the path."""

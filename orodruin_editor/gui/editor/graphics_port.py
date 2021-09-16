@@ -5,8 +5,10 @@ from uuid import UUID
 
 from orodruin.port.port import Port, PortDirection
 from PySide2.QtCore import QPointF, QRectF, Qt
-from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
+from PySide2.QtGui import QBrush, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
+
+from .graphics_socket import GraphicsSocket
 
 if TYPE_CHECKING:
     from .graphics_component import GraphicsComponent
@@ -27,19 +29,15 @@ class GraphicsPort(QGraphicsItem):
 
         self.width = 175
         self.height = 25
-        self.radius = 5
         self.padding = 10
 
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
 
-        self._color_outline = QColor("#101010")
-
-        self._color_background = QColor(Qt.white)
-
-        self._pen = QPen(self._color_outline)
-        self._pen.setWidth(2)
-        self._brush = QBrush(self._color_background)
+        self.graphics_socket = GraphicsSocket(self)
+        self.graphics_socket.moveBy(
+            self.socket_position().x(), self.socket_position().y()
+        )
 
     def uuid(self) -> UUID:
         """UUID of this graphics port."""
@@ -53,8 +51,8 @@ class GraphicsPort(QGraphicsItem):
         """Getter for this graphics port's graphics component."""
         return self._graphics_component
 
-    def port_position(self) -> QPointF:
-        """Local position of the Port"""
+    def socket_position(self) -> QPointF:
+        """Local position of the Port's socket"""
         horizontal_offset = (
             0 if self._port.direction() is PortDirection.input else self.width
         )
@@ -65,17 +63,14 @@ class GraphicsPort(QGraphicsItem):
 
     def scene_port_position(self) -> QPointF:
         """Global position of the Port, used to attach Connections to."""
-        return self.scenePos() + self.port_position()
+        return self.scenePos() + self.socket_position()
 
     def boundingRect(self) -> QRectF:
-        horizontal_offset = (
-            0 if self._port.direction() is PortDirection.input else self.width
-        )
         return QRectF(
-            -self.radius + horizontal_offset,
-            -self.radius + self.height / 2,
-            2 * self.radius,
-            2 * self.radius,
+            0,
+            0,
+            self.width,
+            self.height,
         )
 
     def paint(
@@ -84,8 +79,6 @@ class GraphicsPort(QGraphicsItem):
         option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
         widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
-        painter.setBrush(self._brush)
-        painter.setPen(self._pen)
 
         path_name = QPainterPath()
         path_name.addText(
@@ -107,15 +100,3 @@ class GraphicsPort(QGraphicsItem):
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(self._name_color))
         painter.drawPath(path_name)
-
-        horizontal_offset = (
-            0 if self._port.direction() is PortDirection.input else self.width
-        )
-        painter.setPen(self._pen)
-        painter.setBrush(self._brush)
-        painter.drawEllipse(
-            -self.radius + horizontal_offset,
-            -self.radius + self.height / 2,
-            2 * self.radius,
-            2 * self.radius,
-        )

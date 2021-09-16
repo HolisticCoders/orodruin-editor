@@ -4,13 +4,7 @@ from uuid import UUID
 from orodruin.component import Component
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
-from PySide2.QtWidgets import (
-    QGraphicsItem,
-    QGraphicsSceneMouseEvent,
-    QGraphicsTextItem,
-    QStyleOptionGraphicsItem,
-    QWidget,
-)
+from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 from .graphics_port import GraphicsPort
 
@@ -28,37 +22,29 @@ class GraphicsComponent(QGraphicsItem):
 
         self.width = 175
         self.corner_radius = 5
-        self.name_height = 30
+        self.header_height = 10
         self.padding = 5
         self.bottom_padding = 5
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-        self._pen_default = QPen(QColor("#101010"))
-        self._pen_default.setWidth(2)
-        self._pen_selected = QPen(QColor("#f5b933"))
-        self._pen_selected.setWidth(2)
+        self._outline_pen_default = Qt.NoPen
+        self._outline_pen_selected = QPen(Qt.white)
+        self._outline_pen_selected.setWidth(2)
 
-        self._brush_name = QBrush(QColor("#2B6299"))
+        self._brush_header = QBrush(QColor("#2B6299"))
         self._brush_background = QBrush(QColor("#333333"))
 
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
 
-        self._name_item = QGraphicsTextItem(self.component.name(), self)
-        self._name_item.setDefaultTextColor(self._name_color)
-        self._name_item.setFont(self._name_font)
-        self._name_item.setTextWidth(self.width - 2 * self.padding)
-        self._name_item.setPos(
-            self.padding,
-            self.name_height / 2 - self._name_item.boundingRect().height() / 2,
-        )
-
     @property
     def height(self):
         """Height of the graphics component."""
-        return self.name_height + self.bottom_padding + 25 * len(self.component.ports())
+        return (
+            self.header_height + self.bottom_padding + 25 * len(self.component.ports())
+        )
 
     def register_port(self, graphics_port: GraphicsPort) -> None:
         """Register a graphics port to this graphics component.
@@ -70,7 +56,7 @@ class GraphicsComponent(QGraphicsItem):
         graphics_port.setParentItem(self)
         graphics_port.setPos(
             0,
-            self.name_height + graphics_port.height * index,
+            self.header_height + graphics_port.height * index,
         )
         self._ports[graphics_port.uuid()] = graphics_port
 
@@ -113,57 +99,78 @@ class GraphicsComponent(QGraphicsItem):
         widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
 
-        # Background
-        path_background = QPainterPath()
-        path_background.addRoundedRect(
+        # Name
+        path_name = QPainterPath()
+        path_name.addText(
+            0,
+            -5,
+            self._name_font,
+            self.component.name(),
+        )
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(self._name_color))
+        painter.drawPath(path_name)
+
+        # Outline
+        path_outline = QPainterPath()
+        path_outline.addRoundedRect(
             0,
             0,
             self.width,
             self.height,
+            self.corner_radius,
+            self.corner_radius,
+        )
+        painter.setClipPath(path_outline)
+
+        # Header
+        path_header = QPainterPath()
+        path_header.setFillRule(Qt.WindingFill)
+        path_header.addRoundedRect(
+            0,
+            0,
+            self.width,
+            self.header_height,
+            self.corner_radius,
+            self.corner_radius,
+        )
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self._brush_header)
+        painter.drawPath(path_header.simplified())
+
+        # Footer
+        path_header = QPainterPath()
+        path_header.setFillRule(Qt.WindingFill)
+        path_header.addRoundedRect(
+            0,
+            self.height - self.header_height,
+            self.width,
+            self.header_height,
             self.corner_radius,
             self.corner_radius,
         )
         painter.setPen(Qt.NoPen)
         painter.setBrush(self._brush_background)
-        painter.drawPath(path_background.simplified())
+        painter.drawPath(path_header.simplified())
 
-        # name
-        path_name = QPainterPath()
-        path_name.setFillRule(Qt.WindingFill)
-        path_name.addRoundedRect(
+        # Body
+        path_body = QPainterPath()
+        path_body.addRect(
             0,
-            0,
+            self.header_height / 2,
             self.width,
-            self.name_height,
-            self.corner_radius,
-            self.corner_radius,
-        )
-        path_name.addRect(
-            0,
-            self.name_height - self.corner_radius,
-            self.corner_radius,
-            self.corner_radius,
-        )
-        path_name.addRect(
-            self.width - self.corner_radius,
-            self.name_height - self.corner_radius,
-            self.corner_radius,
-            self.corner_radius,
+            self.height - self.header_height / 2,
         )
         painter.setPen(Qt.NoPen)
-        painter.setBrush(self._brush_name)
-        painter.drawPath(path_name.simplified())
+        painter.setBrush(self._brush_background)
+        painter.drawPath(path_body.simplified())
 
-        path_background = QPainterPath()
-        path_background.addRoundedRect(
-            0,
-            0,
-            self.width,
-            self.height,
-            self.corner_radius,
-            self.corner_radius,
+        # Outline
+        outline_pen = (
+            self._outline_pen_default
+            if not self.isSelected()
+            else self._outline_pen_selected
         )
-        pen = self._pen_default if not self.isSelected() else self._pen_selected
-        painter.setPen(pen)
+        painter.setPen(outline_pen)
         painter.setBrush(Qt.NoBrush)
-        painter.drawPath(path_background.simplified())
+        painter.drawPath(path_outline.simplified())
