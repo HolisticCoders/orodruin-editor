@@ -35,11 +35,13 @@ class GraphicsSocket(QGraphicsItem):
         return self.graphics_port.port()
 
     def boundingRect(self) -> QRectF:
+        # return a bigger bounding rect than the visual socket
+        # to make it easier to interact with
         return QRectF(
-            -self.radius,
-            -self.radius,
-            2 * self.radius,
-            2 * self.radius,
+            -self.radius * 2,
+            -self.radius * 2,
+            2 * self.radius * 2,
+            2 * self.radius * 2,
         )
 
     def paint(
