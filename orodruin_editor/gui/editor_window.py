@@ -28,7 +28,10 @@ class OrodruinEditorWindow(QMainWindow):
         self.active_scene: GraphicsScene = None
 
         LibraryManager.register_library(
-            Path(R"C:\Repositories\holistic-coders\orodruin\tests\TestLibrary")
+            Path(__file__).parent.parent.parent.parent  # 🙃
+            / "orodruin"
+            / "tests"
+            / "TestLibrary"
         )
 
         # graphics view
