@@ -63,9 +63,16 @@ class GraphicsComponentName(QGraphicsItem):
 
     def end_rename(self):
         """End the rename process"""
+        self.proxy_widget.hide()
+        if not self.line_edit.isModified():
+            return
+
+        # Qt sends the editingFinished signal twice.
+        # Setting the line_edit as modified prevents anything to run the 2nd time.
+        self.line_edit.setModified(False)
+
         name = self.line_edit.text()
         orodruin.commands.RenameComponent(self.component(), name).do()
-        self.proxy_widget.hide()
 
     def boundingRect(self) -> QRectF:
         return self._bounding_rect
