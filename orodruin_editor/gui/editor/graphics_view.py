@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 import orodruin.commands
-from orodruin.port.port import PortDirection
+from orodruin.core import PortDirection
 from PySide2.QtCore import QEvent, QRectF, Qt
 from PySide2.QtGui import (
     QBrush,

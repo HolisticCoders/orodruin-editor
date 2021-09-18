@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from uuid import UUID
 
 import orodruin.commands
-from orodruin import Component, LibraryManager, PortDirection
+from orodruin.core import Component, LibraryManager, PortDirection
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QDockWidget, QMainWindow, QWidget
 

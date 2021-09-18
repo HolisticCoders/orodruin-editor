@@ -5,9 +5,7 @@ import math
 from typing import TYPE_CHECKING, Dict, Optional
 from uuid import UUID
 
-from orodruin import Component, Graph
-from orodruin.connection import Connection
-from orodruin.port.port import Port
+from orodruin.core import Component, Connection, Graph, Port
 from PySide2.QtCore import QLine, QObject, QRectF
 from PySide2.QtGui import QColor, QPainter, QPen
 from PySide2.QtWidgets import QGraphicsScene

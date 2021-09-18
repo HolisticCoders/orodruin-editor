@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, List, Optional
 
-from orodruin.library import LibraryManager
+from orodruin.core import LibraryManager
 from PySide2.QtCore import QAbstractListModel, QModelIndex, QObject, Qt
 
 
@@ -16,7 +16,7 @@ class ComponentListModel(QAbstractListModel):
 
     def refresh_components_list(self):
         """Refresh the component list."""
-        self._compoents = []
+        self._components = []
         for library in LibraryManager.libraries():
             self._components.extend(library.components("orodruin"))
 
