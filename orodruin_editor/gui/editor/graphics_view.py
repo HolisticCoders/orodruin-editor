@@ -17,6 +17,7 @@ from PySide2.QtGui import (
 )
 from PySide2.QtWidgets import QGraphicsView
 
+from orodruin_editor.gui.editor.graphics_component_name import GraphicsComponentName
 from orodruin_editor.gui.editor.graphics_socket import GraphicsSocket
 
 from .graphics_component import GraphicsComponent
@@ -133,10 +134,10 @@ class GraphicsView(QGraphicsView):
 
     def on_left_mouse_released(self, event: QMouseEvent):
         """Handle left mouse button released event."""
-        if self._temporary_connection:
-            item = self.itemAt(event.pos())
+        item = self.itemAt(event.pos())
 
-            if isinstance(item, GraphicsSocket):
+        if isinstance(item, GraphicsSocket):
+            if self._temporary_connection:
                 if item.port().direction is PortDirection.input:
                     source = self._temporary_connection.source_graphics_port.port()
                     target = item.port()
@@ -154,8 +155,10 @@ class GraphicsView(QGraphicsView):
                 except Exception as e:
                     logger.warning(e)
 
-            self.scene().removeItem(self._temporary_connection)
-            self._temporary_connection = None
+                self.scene().removeItem(self._temporary_connection)
+                self._temporary_connection = None
+        elif isinstance(item, GraphicsComponentName):
+            item.init_rename()
         else:
             super().mouseReleaseEvent(event)
 

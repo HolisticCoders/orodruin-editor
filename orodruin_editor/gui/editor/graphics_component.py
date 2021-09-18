@@ -6,6 +6,7 @@ from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
+from .graphics_component_name import GraphicsComponentName
 from .graphics_port import GraphicsPort
 
 
@@ -36,8 +37,7 @@ class GraphicsComponent(QGraphicsItem):
         self._brush_header = QBrush(QColor("#2B6299"))
         self._brush_background = QBrush(QColor("#333333"))
 
-        self._name_color = Qt.white
-        self._name_font = QFont("Roboto", 10)
+        self.name_item = GraphicsComponentName(self)
 
     @property
     def height(self):
@@ -98,18 +98,6 @@ class GraphicsComponent(QGraphicsItem):
         option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
         widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
-
-        # Name
-        path_name = QPainterPath()
-        path_name.addText(
-            0,
-            -5,
-            self._name_font,
-            self.component.name(),
-        )
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QBrush(self._name_color))
-        painter.drawPath(path_name)
 
         # Outline
         path_outline = QPainterPath()
