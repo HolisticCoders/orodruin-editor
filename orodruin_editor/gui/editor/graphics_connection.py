@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from PySide2.QtCore import QPointF
-from PySide2.QtGui import QLinearGradient, QPainter, QPainterPath, QPen, Qt
+from PySide2.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPen, Qt
 from PySide2.QtWidgets import (
     QGraphicsItem,
     QGraphicsPathItem,
@@ -52,6 +52,18 @@ class GraphicsConnection(QGraphicsPathItem):
             return self.mouse_position
         return self.target_graphics_port.scene_socket_position()
 
+    def source_color(self) -> QColor:
+        if self.source_graphics_port:
+            return self.source_graphics_port.graphics_socket.color()
+        else:
+            return self.target_graphics_port.graphics_socket.color()
+
+    def target_color(self) -> QColor:
+        if self.target_graphics_port:
+            return self.target_graphics_port.graphics_socket.color()
+        else:
+            return self.source_graphics_port.graphics_socket.color()
+
     def update_path(self):
         """Update the path."""
         a = self.source_position()
@@ -75,16 +87,8 @@ class GraphicsConnection(QGraphicsPathItem):
         self.gradient.setStart(self.source_position())
         self.gradient.setFinalStop(self.target_position())
 
-        source_color = Qt.white
-        target_color = Qt.white
-
-        if self.source_graphics_port:
-            source_color = self.source_graphics_port.graphics_socket.color()
-        if self.target_graphics_port:
-            target_color = self.target_graphics_port.graphics_socket.color()
-
-        self.gradient.setColorAt(0, source_color)
-        self.gradient.setColorAt(1, target_color)
+        self.gradient.setColorAt(0, self.source_color())
+        self.gradient.setColorAt(1, self.target_color())
         self._unselected_pen = QPen(self.gradient, 2)
         pen = self._unselected_pen if not self.isSelected() else self._selected_pen
         painter.setPen(pen)
