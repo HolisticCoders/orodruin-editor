@@ -22,7 +22,7 @@ class OrodruinEditorWindow(QMainWindow):
     ) -> None:
         super().__init__(parent=parent)
         self.setWindowTitle("Orodruin Editor")
-        self.setGeometry(200, 200, 800, 600)
+        self.setGeometry(200, 200, 1280, 720)
 
         self._scenes: Dict[UUID, GraphicsScene] = {}
         self.active_scene: GraphicsScene = None
