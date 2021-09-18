@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
 from orodruin.core import Port
@@ -9,6 +10,19 @@ from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 if TYPE_CHECKING:
     from .graphics_port import GraphicsPort
+
+
+class PortColor(Enum):
+    """A Mapping between the port type and port colors."""
+
+    Matrix3 = QColor("#cc6666")
+    Matrix4 = QColor("#cc6666")
+    Vector2 = QColor("#b5bd68")
+    Vector3 = QColor("#b5bd68")
+    bool = QColor("#de935f")
+    float = QColor("#8abeb7")
+    int = QColor("#81a2be")
+    str = QColor("#f0c674")
 
 
 class GraphicsSocket(QGraphicsItem):
@@ -22,13 +36,22 @@ class GraphicsSocket(QGraphicsItem):
 
         self.graphics_port = graphics_port
 
-        self.radius = 5
+        self.radius = 6
         self._color_outline = QColor("#101010")
         self._color_background = QColor(Qt.white)
 
         self._pen = QPen(self._color_outline)
         self._pen.setWidth(2)
-        self._brush = QBrush(self._color_background)
+        self._brush = QBrush(self.color())
+
+    def color(self) -> QColor:
+        """Color the Socket should have"""
+        port_type = self.graphics_port.port().type()
+        try:
+            color = PortColor[port_type.__name__].value
+        except:
+            color = Qt.lightGray
+        return color
 
     def port(self) -> Port:
         """Return the Orodruin Port this Socket maps to."""

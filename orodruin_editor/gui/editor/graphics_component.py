@@ -22,8 +22,8 @@ class GraphicsComponent(QGraphicsItem):
         self._ports: Dict[UUID, GraphicsPort] = {}
 
         self.width = 175
-        self.corner_radius = 5
-        self.header_height = 10
+        self.header_height = 5
+        self.corner_radius = self.header_height / 2
         self.padding = 5
         self.bottom_padding = 5
 
@@ -32,7 +32,7 @@ class GraphicsComponent(QGraphicsItem):
 
         self._outline_pen_default = Qt.NoPen
         self._outline_pen_selected = QPen(Qt.white)
-        self._outline_pen_selected.setWidth(2)
+        self._outline_pen_selected.setWidth(self.header_height)
 
         self._brush_header = QBrush(QColor("#2B6299"))
         self._brush_background = QBrush(QColor("#333333"))

@@ -95,8 +95,16 @@ class GraphicsView(QGraphicsView):
         self.scale(zoom_factor, zoom_factor)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        item = self.itemAt(event.pos())
         if self._temporary_connection:
-            self._temporary_connection.mouse_position = self.mapToScene(event.pos())
+            if isinstance(item, GraphicsSocket):
+                self._temporary_connection.mouse_position = (
+                    item.graphics_port.scene_socket_position()
+                )
+            elif isinstance(item, GraphicsPort):
+                self._temporary_connection.mouse_position = item.scene_socket_position()
+            else:
+                self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self._temporary_connection.update_path()
         return super().mouseMoveEvent(event)
 
@@ -109,7 +117,16 @@ class GraphicsView(QGraphicsView):
         """Handle left mouse button pressed event."""
         item = self.itemAt(event.pos())
         if isinstance(item, GraphicsSocket):
-            self._temporary_connection = GraphicsConnection(item.graphics_port)
+            if item.port().direction() == PortDirection.output:
+                self._temporary_connection = GraphicsConnection(
+                    source_graphics_port=item.graphics_port,
+                    target_graphics_port=None,
+                )
+            else:
+                self._temporary_connection = GraphicsConnection(
+                    source_graphics_port=None,
+                    target_graphics_port=item.graphics_port,
+                )
             self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self.scene().addItem(self._temporary_connection)
         else:
@@ -136,31 +153,33 @@ class GraphicsView(QGraphicsView):
         """Handle left mouse button released event."""
         item = self.itemAt(event.pos())
 
-        if isinstance(item, GraphicsSocket):
+        if isinstance(item, (GraphicsSocket, GraphicsPort)):
             if self._temporary_connection:
-                if item.port().direction is PortDirection.input:
+                if self._temporary_connection.source_graphics_port:
                     source = self._temporary_connection.source_graphics_port.port()
                     target = item.port()
                 else:
                     source = item.port()
-                    target = self._temporary_connection.source_graphics_port.port()
+                    target = self._temporary_connection.target_graphics_port.port()
 
                 connect_port_command = orodruin.commands.ConnectPorts(
                     self.window.active_scene.graph,
                     source,
                     target,
+                    force=True,
                 )
                 try:
                     connect_port_command.do()
                 except Exception as e:
                     logger.warning(e)
-
-                self.scene().removeItem(self._temporary_connection)
-                self._temporary_connection = None
         elif isinstance(item, GraphicsComponentName):
             item.init_rename()
         else:
             super().mouseReleaseEvent(event)
+
+        if self._temporary_connection:
+            self.scene().removeItem(self._temporary_connection)
+            self._temporary_connection = None
 
     def on_right_mouse_released(self, event: QMouseEvent):
         """Handle right mouse button released event."""

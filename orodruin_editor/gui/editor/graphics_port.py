@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from orodruin.core import Port, PortDirection
-from PySide2.QtCore import QPointF, QRectF, Qt
+from PySide2.QtCore import QPoint, QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
@@ -29,7 +29,8 @@ class GraphicsPort(QGraphicsItem):
 
         self.width = 175
         self.height = 25
-        self.padding = 10
+        self.padding = 15
+        self.port_offset = 0
 
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
@@ -54,15 +55,17 @@ class GraphicsPort(QGraphicsItem):
     def socket_position(self) -> QPointF:
         """Local position of the Port's socket"""
         horizontal_offset = (
-            0 if self._port.direction() is PortDirection.input else self.width
+            self.port_offset
+            if self._port.direction() is PortDirection.input
+            else self.width - self.port_offset
         )
         return QPointF(
             horizontal_offset,
             self.height / 2,
         )
 
-    def scene_port_position(self) -> QPointF:
-        """Global position of the Port, used to attach Connections to."""
+    def scene_socket_position(self) -> QPointF:
+        """Global position of the Port's socket, used to attach Connections to."""
         return self.scenePos() + self.socket_position()
 
     def boundingRect(self) -> QRectF:
@@ -89,9 +92,12 @@ class GraphicsPort(QGraphicsItem):
         )
 
         horizontal_offset = (
-            self.padding
+            self.port_offset + self.padding
             if self._port.direction() is PortDirection.input
-            else self.width - path_name.boundingRect().width() - self.padding
+            else self.width
+            - path_name.boundingRect().width()
+            - self.padding
+            - self.port_offset
         )
         path_name.translate(
             horizontal_offset,
