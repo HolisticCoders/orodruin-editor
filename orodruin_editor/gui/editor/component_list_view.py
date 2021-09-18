@@ -19,11 +19,11 @@ class ComponentListView(QListView):
         if not index:
             return
 
-        component_name = self.model().itemData(index)[0]
+        component = self.model().components()[index.row()]
 
         command = orodruin.commands.ImportComponent(
             self.window.active_scene.graph,
-            component_name,
-            library_name="TestLibrary",
+            component.path.stem,
+            component.library_name,
         )
         command.do()
