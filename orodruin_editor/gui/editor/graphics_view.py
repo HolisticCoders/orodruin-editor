@@ -174,8 +174,7 @@ class GraphicsView(QGraphicsView):
                     logger.warning(e)
         elif isinstance(item, GraphicsComponentName):
             item.init_rename()
-        else:
-            super().mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
 
         if self._temporary_connection:
             self.scene().removeItem(self._temporary_connection)
