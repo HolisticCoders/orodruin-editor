@@ -3,7 +3,7 @@ from uuid import UUID
 
 from orodruin.core import Component
 from PySide2.QtCore import QRectF, Qt
-from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
+from PySide2.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 from .graphics_component_name import GraphicsComponentName
@@ -21,7 +21,7 @@ class GraphicsComponent(QGraphicsItem):
         self.component = component
         self._ports: Dict[UUID, GraphicsPort] = {}
 
-        self.width = 175
+        self.width = 150
         self.header_height = 5
         self.corner_radius = self.header_height / 2
         self.padding = 5

@@ -27,7 +27,7 @@ class GraphicsPort(QGraphicsItem):
         self._port = port
         self._graphics_component = graphics_component
 
-        self.width = 175
+        self.width = 150
         self.height = 25
         self.padding = 15
         self.port_offset = 0
