@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 import orodruin.commands
 from orodruin.core.component import Component
-from PySide2.QtCore import QRectF, Qt
+from PySide2.QtCore import QRect, QRectF, Qt
 from PySide2.QtGui import QBrush, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import (
     QGraphicsItem,
@@ -33,16 +33,18 @@ class GraphicsComponentName(QGraphicsItem):
         self.proxy_widget = QGraphicsProxyWidget(self)
         self.line_edit = QLineEdit(self.graphics_component.component.name())
         self.line_edit.editingFinished.connect(self.end_rename)
+        self.line_edit.setGeometry(
+            QRect(
+                0,
+                0,
+                self.graphics_component.width,
+                20,  # arbitrary value that worked
+            )
+        )
+
         self.proxy_widget.setWidget(self.line_edit)
         self.proxy_widget.moveBy(0, -self.proxy_widget.boundingRect().height())
         self.proxy_widget.hide()
-
-    @property
-    def height(self):
-        """Height of the graphics component."""
-        return (
-            self.header_height + self.bottom_padding + 25 * len(self.component.ports())
-        )
 
     def component(self) -> Component:
         """Return the name of the orodruin component."""
@@ -68,6 +70,10 @@ class GraphicsComponentName(QGraphicsItem):
     def boundingRect(self) -> QRectF:
         return self._bounding_rect
 
+    def set_bounding_rect(self, rect: QRectF) -> None:
+        """Set the bounding rect"""
+        self._bounding_rect = rect
+
     def paint(
         self,
         painter: QPainter,
@@ -83,7 +89,7 @@ class GraphicsComponentName(QGraphicsItem):
             self._name_font,
             self.graphics_component.component.name(),
         )
-        self._bounding_rect = path_name.boundingRect()
+        self.set_bounding_rect(path_name.boundingRect())
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(Qt.white))
         painter.drawPath(path_name)
