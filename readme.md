@@ -9,7 +9,10 @@ A GUI editor for managing [Orodruin](https://github.com/HolisticCoders/orodruin)
 - [Orodruin](https://github.com/HolisticCoders/orodruin) must already be cloned.
 # Installation
 - Clone this repository next to orodruin's repository (this is imperative, poetry uses a relative path to orodruin's folder to use it as a dependency.)
-- cd in `orodruin-editor` and run `poetry install -E PySide2 --no-dev` to create a new virtual env and install all the dependencies.
+- cd in `orodruin-editor` 
+- Run `poetry config virtualenvs.in-project true --local` to make sure poetry will create the virtualenv inside the project folder.
+    Note: Skip the `--local` argument if you want that behavior in every project.
+- Run `poetry install -E PySide2 --no-dev` to create a new virtual env and install all the dependencies.
     Remove the `--no-dev` argument if you want the dev dependencies.
 - To run the editor, run `poetry run python orodruin_editor/main.py`
     Alternatively, you can activate the virtualenv and run `python orodruin_editor/main.py`
