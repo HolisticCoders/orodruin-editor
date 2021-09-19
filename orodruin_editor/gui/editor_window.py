@@ -27,13 +27,6 @@ class OrodruinEditorWindow(QMainWindow):
         self._scenes: Dict[UUID, GraphicsScene] = {}
         self.active_scene: GraphicsScene = None
 
-        LibraryManager.register_library(
-            Path(__file__).parent.parent.parent.parent  # 🙃
-            / "orodruin"
-            / "tests"
-            / "TestLibrary"
-        )
-
         # graphics view
         self.view = GraphicsView(self)
         self.setCentralWidget(self.view)
@@ -45,8 +38,6 @@ class OrodruinEditorWindow(QMainWindow):
         dock.setWidget(component_list)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
-        root_component = Component("root")
-        self.set_active_scene(root_component)
         # self.add_debug_content()
 
     def add_debug_content(self):
