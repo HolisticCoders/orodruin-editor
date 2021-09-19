@@ -67,8 +67,8 @@ class GraphicsConnection(QGraphicsPathItem):
     def update_path(self):
         """Update the path."""
         a = self.source_position()
-        b = self.source_position() + QPointF(20, 0)
-        c = self.target_position() - QPointF(20, 0)
+        b = self.source_position() + QPointF(25, 0)
+        c = self.target_position() - QPointF(25, 0)
         d = self.target_position()
 
         path = QPainterPath(a)
