@@ -42,9 +42,9 @@ class GraphicsScene(QGraphicsScene):
         self.graph.connection_registered.subscribe(self.register_connection)
         self.graph.connection_unregistered.subscribe(self.unregister_connection)
 
-        self._components: Dict[UUID, GraphicsComponent] = {}
-        self._ports: Dict[UUID, GraphicsPort] = {}
-        self._connections: Dict[UUID, GraphicsConnection] = {}
+        self._graphics_components: Dict[UUID, GraphicsComponent] = {}
+        self._graphics_ports: Dict[UUID, GraphicsPort] = {}
+        self._graphics_connections: Dict[UUID, GraphicsConnection] = {}
 
         # settings
         self.square_size = 25  # in pixels
@@ -90,9 +90,11 @@ class GraphicsScene(QGraphicsScene):
         Args:
             component: Orodruin Component to register a graphics component for.
         """
-        graphics_component = GraphicsComponent(component)
+        graphics_component = GraphicsComponent.from_component(component)
         self.addItem(graphics_component)
-        self._components[component.uuid()] = graphics_component
+        self._graphics_components[component.uuid()] = graphics_component
+        self.window.components[component.uuid()] = component
+        self.window.graphs[component.uuid()] = component.graph()
 
     def unregister_component(self, component: Component) -> None:
         """Unregister a component from the scene
@@ -100,8 +102,10 @@ class GraphicsScene(QGraphicsScene):
         Args:
             uuid: UUID of the Orodruin Component.
         """
-        graphics_component = self._components.pop(component.uuid())
+        graphics_component = self._graphics_components.pop(component.uuid())
         self.removeItem(graphics_component)
+        del self.window.components[component.uuid()]
+        del self.window.graphs[component.uuid()]
 
     def register_port(self, port: Port) -> None:
         """Register a graphics port to the scene.
@@ -109,10 +113,11 @@ class GraphicsScene(QGraphicsScene):
         Args:
             port: Orodruin Port to register a graphics port for.
         """
-        graphics_component = self._components[port.component().uuid()]
-        graphics_port = GraphicsPort(port, graphics_component)
-        graphics_component.register_port(graphics_port)
-        self._ports[port.uuid()] = graphics_port
+        graphics_component = self._graphics_components[port.component().uuid()]
+        graphics_port = GraphicsPort.from_port(port, graphics_component)
+        graphics_component.add_graphics_port(graphics_port)
+        self._graphics_ports[port.uuid()] = graphics_port
+        self.window.ports[port.uuid()] = port
 
     def unregister_port(self, port: Port) -> None:
         """Unregister a graphics port from the scene.
@@ -120,11 +125,11 @@ class GraphicsScene(QGraphicsScene):
         Args:
             uuid: UUID of the Orodruin Port.
         """
-        uuid = port.uuid()
-        graphics_port = self._ports.pop(uuid)
+        graphics_port = self._graphics_ports.pop(port.uuid())
         graphics_component = graphics_port.graphics_component()
-        graphics_component.unregister_port(uuid)
+        graphics_component.remove_graphics_port(port.uuid())
         self.removeItem(graphics_port)
+        del self.window.ports[port.uuid()]
 
     def register_connection(self, connection: Connection) -> None:
         """Register a graphics connection to the scene.
@@ -137,14 +142,15 @@ class GraphicsScene(QGraphicsScene):
             source_id = connection.source().uuid()
             target_id = connection.target().uuid()
 
-            source_graphics_port = self._ports[source_id]
-            target_graphics_port = self._ports[target_id]
+            source_graphics_port = self._graphics_ports[source_id]
+            target_graphics_port = self._graphics_ports[target_id]
 
             graphics_connection = GraphicsConnection(
                 source_graphics_port, target_graphics_port
             )
             self.addItem(graphics_connection)
-            self._connections[connection.uuid()] = graphics_connection
+            self._graphics_connections[connection.uuid()] = graphics_connection
+            self.window.connections[connection.uuid()] = connection
         except Exception:
             logger.error(
                 "Could not create graphical connection between "
@@ -158,8 +164,9 @@ class GraphicsScene(QGraphicsScene):
             uuid: UUID of the Orodruin Connection.
         """
         try:
-            graphics_connection = self._connections.pop(connection.uuid())
+            graphics_connection = self._graphics_connections.pop(connection.uuid())
             self.removeItem(graphics_connection)
+            del self.window.connections[connection.uuid()]
         except Exception:
             logger.error(
                 "Could not delete graphical connection between "

@@ -24,20 +24,21 @@ class GraphicsComponentName(QGraphicsItem):
     def __init__(self, graphics_component: GraphicsComponent) -> None:
         super().__init__(parent=graphics_component)
 
+        self._graphics_component = graphics_component
+
         self._name_color = Qt.white
         self._name_font = QFont("Roboto", 10)
 
-        self.graphics_component = graphics_component
         self._bounding_rect = QRectF(0, 0, 0, 0)
 
         self.proxy_widget = QGraphicsProxyWidget(self)
-        self.line_edit = QLineEdit(self.graphics_component.component.name())
+        self.line_edit = QLineEdit(self._graphics_component.name())
         self.line_edit.editingFinished.connect(self.end_rename)
         self.line_edit.setGeometry(
             QRect(
                 0,
                 0,
-                self.graphics_component.width,
+                self._graphics_component.width(),
                 20,  # arbitrary value that worked
             )
         )
@@ -46,13 +47,9 @@ class GraphicsComponentName(QGraphicsItem):
         self.proxy_widget.moveBy(0, -self.proxy_widget.boundingRect().height())
         self.proxy_widget.hide()
 
-    def component(self) -> Component:
-        """Return the name of the orodruin component."""
-        return self.graphics_component.component
-
     def name(self) -> str:
         """Return the name of the orodruin component."""
-        return self.component().name()
+        return self._graphics_component.component().name()
 
     def init_rename(self):
         """Init the rename process"""
@@ -94,7 +91,7 @@ class GraphicsComponentName(QGraphicsItem):
             0,
             -5,
             self._name_font,
-            self.graphics_component.component.name(),
+            self._graphics_component.name(),
         )
         self.set_bounding_rect(path_name.boundingRect())
         painter.setPen(Qt.NoPen)

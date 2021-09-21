@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, Optional
+from uuid import UUID
 
 import orodruin.commands
 from orodruin.core import PortDirection
+from orodruin.core.graph import Graph
 from PySide2.QtCore import QEvent, QRectF, Qt
 from PySide2.QtGui import (
     QBrush,
@@ -18,6 +20,7 @@ from PySide2.QtGui import (
 from PySide2.QtWidgets import QGraphicsView
 
 from orodruin_editor.gui.editor.graphics_component_name import GraphicsComponentName
+from orodruin_editor.gui.editor.graphics_scene import GraphicsScene
 from orodruin_editor.gui.editor.graphics_socket import GraphicsSocket
 
 from .graphics_component import GraphicsComponent
@@ -99,7 +102,7 @@ class GraphicsView(QGraphicsView):
         if self._temporary_connection:
             if isinstance(item, GraphicsSocket):
                 self._temporary_connection.mouse_position = (
-                    item.graphics_port.scene_socket_position()
+                    item._graphics_port.scene_socket_position()
                 )
             elif isinstance(item, GraphicsPort):
                 self._temporary_connection.mouse_position = item.scene_socket_position()
@@ -111,21 +114,22 @@ class GraphicsView(QGraphicsView):
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_Delete:
             self.on_del_released(event)
-        super().keyReleaseEvent(event)
+        else:
+            super().keyReleaseEvent(event)
 
     def on_left_mouse_pressed(self, event: QMouseEvent):
         """Handle left mouse button pressed event."""
         item = self.itemAt(event.pos())
         if isinstance(item, GraphicsSocket):
-            if item.port().direction() == PortDirection.output:
+            if item.direction() == PortDirection.output:
                 self._temporary_connection = GraphicsConnection(
-                    source_graphics_port=item.graphics_port,
+                    source_graphics_port=item._graphics_port,
                     target_graphics_port=None,
                 )
             else:
                 self._temporary_connection = GraphicsConnection(
                     source_graphics_port=None,
-                    target_graphics_port=item.graphics_port,
+                    target_graphics_port=item._graphics_port,
                 )
             self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self.scene().addItem(self._temporary_connection)
@@ -156,12 +160,14 @@ class GraphicsView(QGraphicsView):
         if isinstance(item, (GraphicsSocket, GraphicsPort)):
             if self._temporary_connection:
                 if self._temporary_connection.source_graphics_port:
-                    source = self._temporary_connection.source_graphics_port.port()
-                    target = item.port()
+                    source_id = self._temporary_connection.source_graphics_port.uuid()
+                    target_id = item.uuid()
                 else:
-                    source = item.port()
-                    target = self._temporary_connection.target_graphics_port.port()
+                    source_id = item.uuid()
+                    target_id = self._temporary_connection.target_graphics_port.uuid()
 
+                source = self.window.ports[source_id]
+                target = self.window.ports[target_id]
                 connect_port_command = orodruin.commands.ConnectPorts(
                     self.window.active_scene.graph,
                     source,
@@ -206,12 +212,12 @@ class GraphicsView(QGraphicsView):
                 self.window.active_scene.graph.parent_component().parent_component()
             )
             if parent_component:
-                self.window.set_active_scene(parent_component)
+                self.window.set_active_scene(parent_component.uuid())
         elif isinstance(item, GraphicsComponent):
-            self.window.set_active_scene(item.component)
+            self.window.set_active_scene(item.uuid())
         elif isinstance(item, GraphicsPort):
             # We picked up on the graphics port but actually want its component
-            self.window.set_active_scene(item.graphics_component().component)
+            self.window.set_active_scene(item.graphics_component().uuid())
         else:
             super().mouseDoubleClickEvent(event)
 
@@ -233,10 +239,18 @@ class GraphicsView(QGraphicsView):
                     item.uuid(),
                 ).do()
             if isinstance(item, GraphicsConnection):
+                source = self.window.ports.get(item.source_graphics_port.uuid())
+                target = self.window.ports.get(item.target_graphics_port.uuid())
+
+                # The connection might have already been deleted
+                # when its source or target was deleted
+                if not source or not target:
+                    continue
+
                 orodruin.commands.DisconnectPorts(
                     self.window.active_scene.graph,
-                    item.source_graphics_port.port(),
-                    item.target_graphics_port.port(),
+                    source,
+                    target,
                 ).do()
 
     def drawForeground(

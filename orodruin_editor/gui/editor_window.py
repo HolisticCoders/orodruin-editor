@@ -4,6 +4,9 @@ from uuid import UUID
 
 import orodruin.commands
 from orodruin.core import Component, LibraryManager, PortDirection
+from orodruin.core.connection import Connection
+from orodruin.core.graph import Graph
+from orodruin.core.port.port import Port
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QDockWidget, QMainWindow, QWidget
 
@@ -24,7 +27,12 @@ class OrodruinEditorWindow(QMainWindow):
         self.setWindowTitle("Orodruin Editor")
         self.setGeometry(200, 200, 1280, 720)
 
-        self._scenes: Dict[UUID, GraphicsScene] = {}
+        self.graphs: Dict[UUID, Graph] = {}
+        self.components: Dict[UUID, Component] = {}
+        self.ports: Dict[UUID, Port] = {}
+        self.connections: Dict[UUID, Connection] = {}
+
+        self.scenes: Dict[UUID, GraphicsScene] = {}
         self.active_scene: GraphicsScene = None
 
         # graphics view
@@ -83,11 +91,12 @@ class OrodruinEditorWindow(QMainWindow):
             components[1].input1,
         ).do()
 
-    def set_active_scene(self, component: Component):
+    def set_active_scene(self, uuid: UUID):
         """Set the component's graph as the active scene."""
-        scene = self._scenes.get(component.uuid(), None)
+        scene = self.scenes.get(uuid, None)
         if not scene:
-            scene = GraphicsScene(self, component.graph())
-            self._scenes[component.uuid()] = scene
+            graph = self.graphs[uuid]
+            scene = GraphicsScene(self, graph)
+            self.scenes[uuid] = scene
         self.active_scene = scene
         self.view.setScene(self.active_scene)

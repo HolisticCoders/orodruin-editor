@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
+from uuid import UUID
 
-from orodruin.core import Port
+from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QPainter, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
@@ -34,7 +35,7 @@ class GraphicsSocket(QGraphicsItem):
     def __init__(self, graphics_port: GraphicsPort) -> None:
         super().__init__(parent=graphics_port)
 
-        self.graphics_port = graphics_port
+        self._graphics_port = graphics_port
 
         self.radius = 6
         self._color_outline = QColor("#101010")
@@ -44,18 +45,26 @@ class GraphicsSocket(QGraphicsItem):
         self._pen.setWidth(2)
         self._brush = QBrush(self.color())
 
+    def graphics_port(self) -> GraphicsPort:
+        """Return this Graphics Socket's Graphics Port"""
+        return self._graphics_port
+
+    def direction(self) -> PortDirection:
+        """Return this Graphics Socket's PortDirection"""
+        return self._graphics_port.direction()
+
+    def uuid(self) -> UUID:
+        """Return this Graphics Socket's UUID"""
+        return self._graphics_port.uuid()
+
     def color(self) -> QColor:
         """Color the Socket should have"""
-        port_type = self.graphics_port.port().type()
+        port_type = self._graphics_port.port_type()
         try:
             color = PortColor[port_type.__name__].value
         except:
             color = Qt.lightGray
         return color
-
-    def port(self) -> Port:
-        """Return the Orodruin Port this Socket maps to."""
-        return self.graphics_port.port()
 
     def boundingRect(self) -> QRectF:
         # return a bigger bounding rect than the visual socket

@@ -53,19 +53,24 @@ class GraphicsConnection(QGraphicsPathItem):
         return self.target_graphics_port.scene_socket_position()
 
     def source_color(self) -> QColor:
+        """Return the color of this connection's source socket"""
         if self.source_graphics_port:
-            return self.source_graphics_port.graphics_socket.color()
+            return self.source_graphics_port.graphics_socket().color()
         else:
-            return self.target_graphics_port.graphics_socket.color()
+            # This is likely a temporary connection that doesn't have a source yet.
+            # We just return the target's color to have a consistent gradient
+            return self.target_graphics_port.graphics_socket().color()
 
     def target_color(self) -> QColor:
         if self.target_graphics_port:
-            return self.target_graphics_port.graphics_socket.color()
+            return self.target_graphics_port.graphics_socket().color()
         else:
-            return self.source_graphics_port.graphics_socket.color()
+            # This is likely a temporary connection that doesn't have a target yet.
+            # We just return the target's color to have a consistent gradient
+            return self.source_graphics_port.graphics_socket().color()
 
     def update_path(self):
-        """Update the path."""
+        """Update the connection's path."""
         a = self.source_position()
         b = self.source_position() + QPointF(25, 0)
         c = self.target_position() - QPointF(25, 0)

@@ -1,4 +1,5 @@
 import sys
+from logging import root
 from pathlib import Path
 
 from orodruin.core.component import Component
@@ -18,7 +19,9 @@ if __name__ == "__main__":
     window = OrodruinEditorWindow()
 
     root_component = Component("root")
-    window.set_active_scene(root_component)
+    window.components[root_component.uuid()] = root_component
+    window.graphs[root_component.uuid()] = root_component.graph()
+    window.set_active_scene(root_component.uuid())
 
     window.show()
 
