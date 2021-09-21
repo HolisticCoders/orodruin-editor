@@ -22,7 +22,7 @@ class ComponentListView(QListView):
         component = self.model().components()[index.row()]
 
         command = orodruin.commands.ImportComponent(
-            self.window.active_scene.graph,
+            self.window.active_scene.graph(),
             component.path.stem,
             component.library_name,
         )

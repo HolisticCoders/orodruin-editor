@@ -169,7 +169,7 @@ class GraphicsView(QGraphicsView):
                 source = self.window.ports[source_id]
                 target = self.window.ports[target_id]
                 connect_port_command = orodruin.commands.ConnectPorts(
-                    self.window.active_scene.graph,
+                    self.window.active_scene.graph(),
                     source,
                     target,
                     force=True,
@@ -208,16 +208,19 @@ class GraphicsView(QGraphicsView):
         item = self.itemAt(event.pos())
 
         if item is None:
-            parent_component = (
-                self.window.active_scene.graph.parent_component().parent_component()
-            )
-            if parent_component:
-                self.window.set_active_scene(parent_component.uuid())
+            graph = self.window.active_scene.graph()
+            component = graph.parent_component()
+            if component:
+                parent_graph = component.parent_graph()
+                if parent_graph:
+                    self.window.set_active_scene(parent_graph.uuid())
         elif isinstance(item, GraphicsComponent):
-            self.window.set_active_scene(item.uuid())
+            component = self.window.components[item.uuid()]
+            self.window.set_active_scene(component.graph().uuid())
         elif isinstance(item, GraphicsPort):
             # We picked up on the graphics port but actually want its component
-            self.window.set_active_scene(item.graphics_component().uuid())
+            component = self.window.components[item.graphics_component().uuid()]
+            self.window.set_active_scene(component.graph().uuid())
         else:
             super().mouseDoubleClickEvent(event)
 
@@ -235,7 +238,7 @@ class GraphicsView(QGraphicsView):
         for item in selected_items:
             if isinstance(item, GraphicsComponent):
                 orodruin.commands.DeleteComponent(
-                    self.window.active_scene.graph,
+                    self.window.active_scene.graph(),
                     item.uuid(),
                 ).do()
             if isinstance(item, GraphicsConnection):
@@ -248,7 +251,7 @@ class GraphicsView(QGraphicsView):
                     continue
 
                 orodruin.commands.DisconnectPorts(
-                    self.window.active_scene.graph,
+                    self.window.active_scene.graph(),
                     source,
                     target,
                 ).do()
@@ -261,12 +264,18 @@ class GraphicsView(QGraphicsView):
         """Draw Path of the currently active component"""
         area = self.mapToScene(self.viewport().geometry()).boundingRect()
 
+        component = self.scene().graph().parent_component()
+        if component:
+            text = str(component.path())
+        else:
+            text = "/"
+
         path_name = QPainterPath()
         path_name.addText(
             area.x() + 25,
             area.y() + 40,
             self._path_font,
-            str(self.scene().graph.parent_component().path()),
+            text,
         )
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(Qt.darkGray))

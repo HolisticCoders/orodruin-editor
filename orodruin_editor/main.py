@@ -3,6 +3,7 @@ from logging import root
 from pathlib import Path
 
 from orodruin.core.component import Component
+from orodruin.core.graph import Graph
 from orodruin.core.library import LibraryManager
 from PySide2.QtWidgets import QApplication
 
@@ -18,10 +19,9 @@ if __name__ == "__main__":
 
     window = OrodruinEditorWindow()
 
-    root_component = Component("root")
-    window.components[root_component.uuid()] = root_component
-    window.graphs[root_component.uuid()] = root_component.graph()
-    window.set_active_scene(root_component.uuid())
+    root_graph = Graph()
+    window.graphs[root_graph.uuid()] = root_graph
+    window.set_active_scene(root_graph.uuid())
 
     window.show()
 

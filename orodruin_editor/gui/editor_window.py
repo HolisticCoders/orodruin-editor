@@ -53,7 +53,7 @@ class OrodruinEditorWindow(QMainWindow):
         components = []
         for i in range(2):
             command = orodruin.commands.CreateComponent(
-                self.active_scene.graph, f"Component {i:0>3}"
+                self.active_scene._graph, f"Component {i:0>3}"
             )
             component = command.do()
             components.append(component)

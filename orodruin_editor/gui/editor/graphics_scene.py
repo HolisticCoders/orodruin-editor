@@ -35,13 +35,13 @@ class GraphicsScene(QGraphicsScene):
 
         self.window = window
 
-        self.graph = graph
-        self.graph.component_registered.subscribe(self.register_component)
-        self.graph.component_unregistered.subscribe(self.unregister_component)
-        self.graph.port_registered.subscribe(self.register_port)
-        self.graph.port_unregistered.subscribe(self.unregister_port)
-        self.graph.connection_registered.subscribe(self.register_connection)
-        self.graph.connection_unregistered.subscribe(self.unregister_connection)
+        self._graph = graph
+        self._graph.component_registered.subscribe(self.register_component)
+        self._graph.component_unregistered.subscribe(self.unregister_component)
+        self._graph.port_registered.subscribe(self.register_port)
+        self._graph.port_unregistered.subscribe(self.unregister_port)
+        self._graph.connection_registered.subscribe(self.register_connection)
+        self._graph.connection_unregistered.subscribe(self.unregister_connection)
 
         self._graphics_components: Dict[UUID, GraphicsComponent] = {}
         self._graphics_ports: Dict[UUID, GraphicsPort] = {}
@@ -78,17 +78,17 @@ class GraphicsScene(QGraphicsScene):
         """Create all the graphics components, ports and connections in the graph."""
         self._create_input_output_components()
 
-        for component in self.graph.components():
+        for component in self._graph.components():
             self.register_component(component)
 
-        for port in self.graph.ports():
+        for port in self._graph.ports():
             self.register_port(port)
 
-        for connection in self.graph.connections():
+        for connection in self._graph.connections():
             self.register_connection(connection)
 
     def _create_input_output_components(self):
-        parent_component = self.graph.parent_component()
+        parent_component = self._graph.parent_component()
         if not parent_component:
             return
 
@@ -116,6 +116,10 @@ class GraphicsScene(QGraphicsScene):
             self._graphics_ports[port.uuid()] = graphics_port
             component.add_graphics_port(graphics_port)
 
+    def graph(self) -> Graph:
+        """Return the graph this Scene represents."""
+        return self._graph
+
     def register_component(self, component: Component) -> None:
         """Register a graphics component to the scene.
 
@@ -126,7 +130,7 @@ class GraphicsScene(QGraphicsScene):
         self.addItem(graphics_component)
         self._graphics_components[component.uuid()] = graphics_component
         self.window.components[component.uuid()] = component
-        self.window.graphs[component.uuid()] = component.graph()
+        self.window.graphs[component.graph().uuid()] = component.graph()
 
     def unregister_component(self, component: Component) -> None:
         """Unregister a component from the scene
@@ -137,7 +141,7 @@ class GraphicsScene(QGraphicsScene):
         graphics_component = self._graphics_components.pop(component.uuid())
         self.removeItem(graphics_component)
         del self.window.components[component.uuid()]
-        del self.window.graphs[component.uuid()]
+        del self.window.graphs[component.graph().uuid()]
 
     def register_port(self, port: Port) -> None:
         """Register a graphics port to the scene.
