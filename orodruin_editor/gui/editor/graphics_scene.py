@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 from uuid import UUID
 
 from orodruin.core import Component, Connection, Graph, Port
+from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QLine, QObject, QRectF
 from PySide2.QtGui import QColor, QPainter, QPen
 from PySide2.QtWidgets import QGraphicsScene
@@ -75,6 +76,8 @@ class GraphicsScene(QGraphicsScene):
 
     def _init_content(self):
         """Create all the graphics components, ports and connections in the graph."""
+        self._create_input_output_components()
+
         for component in self.graph.components():
             self.register_component(component)
 
@@ -83,6 +86,35 @@ class GraphicsScene(QGraphicsScene):
 
         for connection in self.graph.connections():
             self.register_connection(connection)
+
+    def _create_input_output_components(self):
+        parent_component = self.graph.parent_component()
+        if not parent_component:
+            return
+
+        input_component = GraphicsComponent("Input")
+        self.addItem(input_component)
+
+        output_component = GraphicsComponent("Output")
+        self.addItem(output_component)
+
+        for port in parent_component.ports():
+            if port.direction() is PortDirection.input:
+                component = input_component
+                port_direction = PortDirection.output
+            else:
+                component = output_component
+                port_direction = PortDirection.input
+
+            graphics_port = GraphicsPort(
+                port.name(),
+                port_direction,
+                port.type(),
+                component,
+                port.uuid(),
+            )
+            self._graphics_ports[port.uuid()] = graphics_port
+            component.add_graphics_port(graphics_port)
 
     def register_component(self, component: Component) -> None:
         """Register a graphics component to the scene.
