@@ -27,6 +27,7 @@ class OrodruinEditorWindow(QMainWindow):
         self.setCentralWidget(self.view)
 
         self._graphics_scene = GraphicsScene(scene, self.view)
+        self.view.set_graphics_scene(self._graphics_scene)
 
         dock = QDockWidget("Component List", self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)

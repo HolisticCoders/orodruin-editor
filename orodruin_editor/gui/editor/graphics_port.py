@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional, Type, Union
 from uuid import UUID, uuid4
 
 from orodruin.core import Port, PortDirection
+from orodruin.core.port.port import PortLike
 from PySide2.QtCore import QPoint, QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
@@ -12,45 +13,36 @@ from .graphics_socket import GraphicsSocket
 
 if TYPE_CHECKING:
     from .graphics_component import GraphicsComponent
+    from .graphics_scene import GraphicsScene
 
 
 class GraphicsPort(QGraphicsItem):
     """Graphical representation of an Orodruin Port."""
 
-    @classmethod
-    def from_port(
-        cls,
-        port: Port,
-        graphics_component: GraphicsComponent,
-    ) -> GraphicsPort:
-        """Create a GraphicsPort from an orodruin Port."""
-        return cls(
-            port.name(),
-            port.direction(),
-            port.type(),
-            graphics_component,
-            port.uuid(),
-        )
-
     def __init__(
         self,
+        scene: GraphicsScene,
         name: str,
         direction: PortDirection,
         port_type: Type,
-        graphics_component: GraphicsComponent,
+        component_id: UUID,
         uuid: Optional[UUID],
+        parent: Optional[QGraphicsItem] = None,
     ) -> None:
-        super().__init__(parent=graphics_component)
+        super().__init__(parent=parent)
+
+        self._scene = scene
 
         self._name = name
         self._direction = direction
         self._port_type = port_type
-        self._graphics_component = graphics_component
+        self._component_id = component_id
 
         if not uuid:
             uuid = uuid4()
         self._uuid = uuid
 
+        self._width = 150
         self._height = 25
         self._padding = 15
         self._port_offset = 0
@@ -81,7 +73,7 @@ class GraphicsPort(QGraphicsItem):
 
     def graphics_component(self) -> GraphicsComponent:
         """Return this graphics port's graphics component."""
-        return self._graphics_component
+        return self._scene.get_graphics_component(self._component_id)
 
     def uuid(self) -> UUID:
         """Return this Graphics port's UUID."""
@@ -93,7 +85,7 @@ class GraphicsPort(QGraphicsItem):
 
     def width(self) -> int:
         """Return the width of this Graphics Port"""
-        return self._graphics_component.width()
+        return self._width
 
     def height(self) -> int:
         """Return the height of this Graphics Port"""
@@ -153,3 +145,11 @@ class GraphicsPort(QGraphicsItem):
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(self._name_color))
         painter.drawPath(path_name)
+
+
+GraphicsPortLike = Union[GraphicsPort, PortLike]
+
+__all__ = [
+    "GraphicsPort",
+    "GraphicsPortLike",
+]

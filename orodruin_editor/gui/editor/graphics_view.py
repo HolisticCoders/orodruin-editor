@@ -33,10 +33,8 @@ logger = logging.getLogger(__name__)
 class GraphicsView(QGraphicsView):
     """GraphicsView for the orodruin editor."""
 
-    def __init__(self, scene: GraphicsScene, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent=parent)
-
-        self._graphics_scene = scene
 
         self._zoom_in_factor = 1.25
 
@@ -57,6 +55,9 @@ class GraphicsView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self._temporary_connection: Optional[GraphicsConnection] = None
+
+    def set_graphics_scene(self, graphics_scene: GraphicsScene) -> None:
+        self._graphics_scene = graphics_scene
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
@@ -204,19 +205,26 @@ class GraphicsView(QGraphicsView):
         item = self.itemAt(event.pos())
 
         if item is None:
-            graph = self._graphics_scene.active_scene()
+            graphics_graph = self._graphics_scene.active_graph()
+            graph = self._graphics_scene.scene().graph_from_graphlike(
+                graphics_graph.uuid()
+            )
             component = graph.parent_component()
             if component:
                 parent_graph = component.parent_graph()
                 if parent_graph:
-                    self.window.set_active_scene(parent_graph.uuid())
+                    self._graphics_scene.set_active_graph(parent_graph)
         elif isinstance(item, GraphicsComponent):
-            component = self.window.components[item.uuid()]
-            self.window.set_active_scene(component.graph().uuid())
+            component = self._graphics_scene.scene().component_from_componentlike(
+                item.uuid()
+            )
+            self._graphics_scene.set_active_graph(component.graph())
         elif isinstance(item, GraphicsPort):
             # We picked up on the graphics port but actually want its component
-            component = self.window.components[item.graphics_component().uuid()]
-            self.window.set_active_scene(component.graph().uuid())
+            component = self._graphics_scene.scene().component_from_componentlike(
+                item.graphics_component().uuid()
+            )
+            self._graphics_scene.set_active_graph(component.graph())
         else:
             super().mouseDoubleClickEvent(event)
 

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 from uuid import UUID
 
 from orodruin.core import Component, Connection, Graph, Port
+from orodruin.core.graph import GraphLike
 from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QLine, QObject, QRectF
 from PySide2.QtGui import QColor, QPainter, QPen
@@ -248,3 +249,11 @@ class GraphicsGraph(QGraphicsScene):
         painter.drawLines(square_lines)
         painter.setPen(self._pen_cell)
         painter.drawLines(cell_lines)
+
+
+GraphicsGraphLike = Union[GraphicsGraph, GraphLike]
+
+__all__ = [
+    "GraphicsGraph",
+    "GraphicsGraphLike",
+]

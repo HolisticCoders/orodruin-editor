@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
-from orodruin.core.component import Component
+from orodruin.core.component import Component, ComponentLike
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 from .graphics_component_name import GraphicsComponentName
-from .graphics_port import GraphicsPort
+from .graphics_port import GraphicsPortLike
+
+if TYPE_CHECKING:
+    from .graphics_scene import GraphicsScene
 
 
 class GraphicsComponent(QGraphicsItem):
@@ -18,26 +21,37 @@ class GraphicsComponent(QGraphicsItem):
     @classmethod
     def from_component(
         cls,
+        scene: GraphicsScene,
         component: Component,
         parent: Optional[QGraphicsItem] = None,
     ) -> GraphicsComponent:
         """Create a GraphicsComponent from an orodruin Component."""
-        return cls(component.name(), component.uuid())
+        graphics_component = cls(scene, component.name(), component.uuid(), parent)
+
+        component.port_registered.subscribe(graphics_component.register_graphics_port)
+        component.port_unregistered.subscribe(
+            graphics_component.unregister_graphics_port
+        )
+
+        return graphics_component
 
     def __init__(
         self,
+        scene: GraphicsScene,
         name: str,
         uuid: Optional[UUID] = None,
         parent: Optional[QGraphicsItem] = None,
     ) -> None:
         super().__init__(parent=parent)
 
+        self._scene = scene
+
         self._name = name
         if not uuid:
             uuid = uuid4()
         self._uuid = uuid
 
-        self._graphics_ports: Dict[UUID, GraphicsPort] = {}
+        self._graphics_ports: List[UUID] = []
 
         self._width = 150
         self._header_height = 5
@@ -79,21 +93,18 @@ class GraphicsComponent(QGraphicsItem):
         """Height of the graphics component."""
         return self._width
 
-    def add_graphics_port(self, graphics_port: GraphicsPort) -> None:
-        """Register a graphics port to this graphics component.
-
-        Args:
-            graphics_port: Graphics port to register.
-        """
+    def register_graphics_port(self, graphics_port: GraphicsPortLike) -> None:
+        """Register a graphics port to this graphics component."""
+        graphics_port = self._scene.get_graphics_port(graphics_port)
         index = len(self._graphics_ports)
         graphics_port.setParentItem(self)
         graphics_port.setPos(
             0,
             self._header_height + graphics_port.height() * index,
         )
-        self._graphics_ports[graphics_port.uuid()] = graphics_port
+        self._graphics_ports.append(graphics_port.uuid())
 
-    def remove_graphics_port(self, uuid: UUID) -> None:
+    def unregister_graphics_port(self, uuid: UUID) -> None:
         """Unregister a graphics port from this graphics component.
 
         Args:
@@ -191,3 +202,11 @@ class GraphicsComponent(QGraphicsItem):
         painter.setPen(outline_pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path_outline.simplified())
+
+
+GraphicsComponentLike = Union[GraphicsComponent, ComponentLike]
+
+__all__ = [
+    "GraphicsComponent",
+    "GraphicsComponentLike",
+]

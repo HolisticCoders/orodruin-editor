@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
+from orodruin.core.connection import ConnectionLike
 from PySide2.QtCore import QPointF
 from PySide2.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPen, Qt
 from PySide2.QtWidgets import (
@@ -99,3 +100,11 @@ class GraphicsConnection(QGraphicsPathItem):
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.path())
+
+GraphicsConnectionLike = Union[GraphicsConnection, ConnectionLike]
+
+
+__all__ = [
+    "GraphicsConnection",
+    "GraphicsConnectionLike",
+]

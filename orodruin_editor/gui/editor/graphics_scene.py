@@ -4,25 +4,19 @@ from typing import Dict, Union
 from uuid import UUID
 
 from orodruin.core import Scene
-from orodruin.core.component import Component, ComponentLike
-from orodruin.core.connection import Connection, ConnectionLike
-from orodruin.core.graph import Graph, GraphLike
-from orodruin.core.port.port import Port, PortLike
+from orodruin.core.component import Component
+from orodruin.core.connection import Connection
+from orodruin.core.graph import Graph
+from orodruin.core.port.port import Port
 
 from orodruin_editor.gui.editor.graphics_view import GraphicsView
 
-from .graphics_component import GraphicsComponent
-from .graphics_connection import GraphicsConnection
-from .graphics_graph import GraphicsGraph
-from .graphics_port import GraphicsPort
+from .graphics_component import GraphicsComponent, GraphicsComponentLike
+from .graphics_connection import GraphicsConnection, GraphicsConnectionLike
+from .graphics_graph import GraphicsGraph, GraphicsGraphLike
+from .graphics_port import GraphicsPort, GraphicsPortLike
 
 logger = logging.getLogger(__name__)
-print(logger)
-
-GraphicsGraphLike = Union[GraphicsGraph, GraphLike]
-GraphicsComponentLike = Union[GraphicsComponent, ComponentLike]
-GraphicsPortLike = Union[GraphicsPort, PortLike]
-GraphicsConnectionLike = Union[GraphicsConnection, ConnectionLike]
 
 
 @dataclass
@@ -51,9 +45,9 @@ class GraphicsScene:
     def __post_init__(self) -> None:
         self._scene.graph_created.subscribe(self.create_graphics_graph)
         self._scene.graph_deleted.subscribe(self.delete_graphics_graph)
-        self._scene.component_created.subscribe(self.create_component)
+        self._scene.component_created.subscribe(self.create_graphics_component)
         self._scene.component_deleted.subscribe(self.delete_component)
-        self._scene.port_created.subscribe(self.create_port)
+        self._scene.port_created.subscribe(self.create_graphics_port)
         self._scene.port_deleted.subscribe(self.delete_port)
         self._scene.connection_created.subscribe(self.create_connection)
         self._scene.connection_deleted.subscribe(self.delete_connection)
@@ -75,7 +69,7 @@ class GraphicsScene:
         """Return the active graphics graph."""
         return self.get_graphics_graph(self._active_graph_id)
 
-    def set_active_graph(self, graph: GraphLike):
+    def set_active_graph(self, graph: GraphicsGraphLike):
         """Set the view's scene to the given graph"""
         graph = self.get_graphics_graph(graph)
         self._active_graph_id = graph.uuid()
@@ -129,9 +123,9 @@ class GraphicsScene:
         Raises:
             TypeError: When the graph is not a valid GraphicsPortLike object.
         """
-        if isinstance(port, GraphicsGraph):
+        if isinstance(port, GraphicsPort):
             pass
-        elif isinstance(port, Graph):
+        elif isinstance(port, Port):
             port = self._graphics_ports[port.uuid()]
         elif isinstance(port, UUID):
             port = self._graphics_ports[port]
@@ -151,9 +145,9 @@ class GraphicsScene:
         Raises:
             TypeError: When the graph is not a valid GraphLike object.
         """
-        if isinstance(connection, GraphicsGraph):
+        if isinstance(connection, GraphicsConnection):
             pass
-        elif isinstance(connection, Graph):
+        elif isinstance(connection, Connection):
             connection = self._graphics_connections[connection.uuid()]
         elif isinstance(connection, UUID):
             connection = self._graphics_connections[connection]
@@ -174,18 +168,27 @@ class GraphicsScene:
     def delete_graphics_graph(self, uuid: UUID) -> None:
         """Delete a graphics graph and unregister it from the scene."""
 
-    def create_component(self, component: Component) -> GraphicsComponent:
+    def create_graphics_component(self, component: Component) -> GraphicsComponent:
         """Create graphics component and register it to the scene."""
-        graphics_component = GraphicsComponent.from_component(component)
+        graphics_component = GraphicsComponent.from_component(self, component)
         self._graphics_components[component.uuid()] = graphics_component
         logger.debug("Created graphics component %s", component.path())
 
     def delete_component(self, uuid: UUID) -> None:
         """Delete a graphics component and unregister it from the scene."""
 
-    def create_port(self, port: Port) -> GraphicsPort:
+    def create_graphics_port(self, port: Port) -> GraphicsPort:
         """Delete a graphics port and unregister it from the scene."""
-        graphics_port = port = GraphicsPort.from_port(port)
+        graphics_port = GraphicsPort(
+            self,
+            port.name(),
+            port.direction(),
+            port.type(),
+            port.component().uuid(),
+            port.uuid(),
+        )
+
+        self._graphics_ports[port.uuid()] = graphics_port
 
         logger.debug("Created graphics port %s", port.path())
 
