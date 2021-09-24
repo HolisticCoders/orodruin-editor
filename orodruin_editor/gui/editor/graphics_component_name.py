@@ -32,7 +32,7 @@ class GraphicsComponentName(QGraphicsItem):
         self._bounding_rect = QRectF(0, 0, 0, 0)
 
         self.proxy_widget = QGraphicsProxyWidget(self)
-        self.line_edit = QLineEdit(self._graphics_component.name())
+        self.line_edit = QLineEdit(self.name())
         self.line_edit.editingFinished.connect(self.end_rename)
         self.line_edit.setGeometry(
             QRect(
@@ -49,7 +49,7 @@ class GraphicsComponentName(QGraphicsItem):
 
     def name(self) -> str:
         """Return the name of the orodruin component."""
-        return self._graphics_component.component().name()
+        return self._graphics_component.name()
 
     def init_rename(self):
         """Init the rename process"""
@@ -91,7 +91,7 @@ class GraphicsComponentName(QGraphicsItem):
             0,
             -5,
             self._name_font,
-            self._graphics_component.name(),
+            self.name(),
         )
         self.set_bounding_rect(path_name.boundingRect())
         painter.setPen(Qt.NoPen)

@@ -1,12 +1,6 @@
-from pathlib import Path
-from typing import Dict, Optional
-from uuid import UUID
+from typing import Optional
 
-import orodruin.commands
-from orodruin.core import Component, LibraryManager, PortDirection
-from orodruin.core.connection import Connection
-from orodruin.core.graph import Graph
-from orodruin.core.port.port import Port
+from orodruin.core import Scene
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QDockWidget, QMainWindow, QWidget
 
@@ -21,82 +15,22 @@ class OrodruinEditorWindow(QMainWindow):
 
     def __init__(
         self,
+        scene: Scene,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent=parent)
         self.setWindowTitle("Orodruin Editor")
         self.setGeometry(200, 200, 1280, 720)
 
-        self.graphs: Dict[UUID, Graph] = {}
-        self.components: Dict[UUID, Component] = {}
-        self.ports: Dict[UUID, Port] = {}
-        self.connections: Dict[UUID, Connection] = {}
-
-        self.scenes: Dict[UUID, GraphicsScene] = {}
-        self.active_scene: GraphicsScene = None
-
         # graphics view
         self.view = GraphicsView(self)
         self.setCentralWidget(self.view)
 
+        self._graphics_scene = GraphicsScene(scene, self.view)
+
         dock = QDockWidget("Component List", self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
-        component_list = ComponentListView(self, dock)
+        component_list = ComponentListView(self._graphics_scene, dock)
         component_list.setModel(ComponentListModel())
         dock.setWidget(component_list)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
-
-        # self.add_debug_content()
-
-    def add_debug_content(self):
-        """Add debug content to the scene."""
-        components = []
-        for i in range(2):
-            command = orodruin.commands.CreateComponent(
-                self.active_scene._graph, f"Component {i:0>3}"
-            )
-            component = command.do()
-            components.append(component)
-
-            command = orodruin.commands.CreatePort(
-                self.root_component.graph(),
-                component,
-                "input1",
-                PortDirection.input,
-                int,
-            )
-            command.do()
-
-            command = orodruin.commands.CreatePort(
-                self.root_component.graph(),
-                component,
-                "input2",
-                PortDirection.input,
-                int,
-            )
-            command.do()
-
-            command = orodruin.commands.CreatePort(
-                self.root_component.graph(),
-                component,
-                "output",
-                PortDirection.output,
-                int,
-            )
-            command.do()
-
-        orodruin.commands.ConnectPorts(
-            self.root_component.graph(),
-            components[0].output,
-            components[1].input1,
-        ).do()
-
-    def set_active_scene(self, uuid: UUID):
-        """Set the component's graph as the active scene."""
-        scene = self.scenes.get(uuid, None)
-        if not scene:
-            graph = self.graphs[uuid]
-            scene = GraphicsScene(self, graph)
-            self.scenes[uuid] = scene
-        self.active_scene = scene
-        self.view.setScene(self.active_scene)
