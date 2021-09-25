@@ -2,15 +2,15 @@ import logging
 import sys
 from pathlib import Path
 
-from orodruin.core import Scene
+from orodruin.core import State
 from orodruin.core.library import LibraryManager
 from PySide2.QtWidgets import QApplication
 
-from orodruin_editor.gui.editor_window import OrodruinEditorWindow
+from orodruin_editor.ui.window import OrodruinWindow
 
 if __name__ == "__main__":
-    logger = logging.getLogger("orodruin_editor")
-    logger.setLevel(logging.DEBUG)
+    logging.getLogger("orodruin").setLevel(logging.DEBUG)
+    logging.getLogger("orodruin_editor").setLevel(logging.DEBUG)
 
     app = QApplication(sys.argv)
 
@@ -19,8 +19,8 @@ if __name__ == "__main__":
     )
     LibraryManager.register_library(test_library_path)
 
-    scene = Scene()
-    window = OrodruinEditorWindow(scene)
+    state = State()
+    window = OrodruinWindow(state)
 
     window.show()
 
