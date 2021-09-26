@@ -7,10 +7,10 @@ from uuid import UUID
 
 from orodruin.core import Connection, Graph, Node, Port, State
 
-from .graphics_connection import GraphicsConnection
 from .graphics_graph import GraphicsGraph, GraphicsGraphLike
-from .graphics_node import GraphicsNode, GraphicsNodeLike
-from .graphics_port import GraphicsPort
+from .graphics_items.graphics_connection import GraphicsConnection
+from .graphics_items.graphics_node import GraphicsNode, GraphicsNodeLike
+from .graphics_items.graphics_port import GraphicsPort
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ class GraphicsState:
     def state(self) -> State:
         return self._state
 
-    def set_active_graph(self, graph: GraphicsGraph) -> None:
+    def set_active_graph(self, graph: GraphicsGraphLike) -> None:
+        graph = self.get_graphics_graph(graph)
         self._active_graph = graph
         self._view.setScene(self._active_graph)
 
@@ -69,7 +70,7 @@ class GraphicsState:
         return graphics_graph
 
     def get_graphics_node(self, node: GraphicsNodeLike) -> GraphicsNode:
-        """Return a registered graphics graph from a GraphicsGraphLike object."""
+        """Return a registered graphics node from a GraphicsNodeLike object."""
         if isinstance(node, UUID):
             graphics_node = self._graphics_nodes[node]
         elif isinstance(node, Node):
@@ -80,6 +81,32 @@ class GraphicsState:
             raise TypeError
 
         return graphics_node
+
+    def get_graph(self, graph: GraphicsGraphLike) -> Graph:
+        """Return a registered graph from a GraphicsGraphLike object."""
+        if isinstance(graph, UUID):
+            graph = self._state.graph_from_graphlike(graph)
+        elif isinstance(graph, GraphicsGraph):
+            graph = self._state.graph_from_graphlike(graph.uuid())
+        elif isinstance(graph, Graph):
+            pass
+        else:
+            raise TypeError
+
+        return graph
+
+    def get_node(self, node: GraphicsNodeLike) -> Node:
+        """Return a registered node from a GraphicsNodeLike object."""
+        if isinstance(node, UUID):
+            node = self._state.node_from_nodelike(node)
+        elif isinstance(node, GraphicsNode):
+            node = self._state.node_from_nodelike(node.uuid())
+        elif isinstance(node, Node):
+            pass
+        else:
+            raise TypeError
+
+        return node
 
     def create_graphics_graph(self, graph: Graph) -> GraphicsGraph:
         """Create a graphics graph and register it to the graphics state."""
@@ -95,7 +122,7 @@ class GraphicsState:
 
     def create_graphics_node(self, node: Node) -> GraphicsNode:
         """Create a graphics node and register it to the graphics state."""
-        graphics_node = GraphicsNode(node.uuid())
+        graphics_node = GraphicsNode.from_node(self, node)
         self._graphics_nodes[node.uuid()] = graphics_node
         logger.debug("Created graphics node %s.", node.uuid())
         return graphics_node

@@ -29,6 +29,7 @@ class OrodruinWindow(QMainWindow):
         self.setCentralWidget(self._view)
 
         self._graphics_state = GraphicsState(self._state, self._view)
+        self._view.set_graphics_state(self._graphics_state)
 
         dock = QDockWidget("Node List", self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)

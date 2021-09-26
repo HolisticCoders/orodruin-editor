@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QApplication
 from orodruin_editor.ui.window import OrodruinWindow
 
 if __name__ == "__main__":
-    logging.getLogger("orodruin").setLevel(logging.DEBUG)
+    # logging.getLogger("orodruin").setLevel(logging.DEBUG)
     logging.getLogger("orodruin_editor").setLevel(logging.DEBUG)
 
     app = QApplication(sys.argv)

@@ -45,6 +45,7 @@ class GraphicsGraph(QGraphicsScene):
     def from_graph(cls, graphics_state: GraphicsState, graph: Graph):
         graphics_graph = GraphicsGraph(graphics_state, graph.uuid())
         graph.node_registered.subscribe(graphics_graph.register_graphics_node)
+        graph.node_unregistered.subscribe(graphics_graph.unregister_graphics_node)
         return graphics_graph
 
     def __post_init__(
@@ -80,6 +81,13 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_nodes.append(node.uuid())
         self.addItem(graphics_node)
         logger.debug("Registered graphics node %s.", node.path())
+
+    def unregister_graphics_node(self, node: Node):
+        """Register an existing graphics node to the graph."""
+        graphics_node = self._graphics_state.get_graphics_node(node)
+        self._graphics_nodes.remove(node.uuid())
+        self.removeItem(graphics_node)
+        logger.debug("Unregistered graphics node %s.", node.path())
 
     def drawBackground(
         self,
