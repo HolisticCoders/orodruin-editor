@@ -10,7 +10,7 @@ from orodruin.core import Connection, Graph, Node, Port, State
 from .graphics_graph import GraphicsGraph, GraphicsGraphLike
 from .graphics_items.graphics_connection import GraphicsConnection
 from .graphics_items.graphics_node import GraphicsNode, GraphicsNodeLike
-from .graphics_items.graphics_port import GraphicsPort
+from .graphics_items.graphics_port import GraphicsPort, GraphicsPortLike
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,8 @@ class GraphicsState:
         self._state.graph_deleted.subscribe(self.delete_graphics_graph)
         self._state.node_created.subscribe(self.create_graphics_node)
         self._state.node_deleted.subscribe(self.delete_graphics_node)
+        self._state.port_created.subscribe(self.create_graphics_port)
+        self._state.port_deleted.subscribe(self.delete_graphics_port)
         self._state.connection_created.subscribe(self.create_graphics_connection)
         self._state.connection_deleted.subscribe(self.delete_graphics_connection)
 
@@ -81,6 +83,19 @@ class GraphicsState:
             raise TypeError
 
         return graphics_node
+
+    def get_graphics_port(self, port: GraphicsPortLike) -> GraphicsPort:
+        """Return a registered graphics port from a GraphicsPortLike object."""
+        if isinstance(port, UUID):
+            graphics_port = self._graphics_ports[port]
+        elif isinstance(port, Port):
+            graphics_port = self._graphics_ports[port.uuid()]
+        elif isinstance(port, GraphicsPort):
+            graphics_port = port
+        else:
+            raise TypeError
+
+        return graphics_port
 
     def get_graph(self, graph: GraphicsGraphLike) -> Graph:
         """Return a registered graph from a GraphicsGraphLike object."""
@@ -134,9 +149,9 @@ class GraphicsState:
 
     def create_graphics_port(self, port: Port) -> GraphicsPort:
         """Create a graphics port and register it to the graphics state."""
-        graphics_port = GraphicsPort()
-        self._graphics_graphs[port.uuid()] = graphics_port
-        logger.debug("Deleted graphics port %s.", port.uuid())
+        graphics_port = GraphicsPort.from_port(self, port)
+        self._graphics_ports[port.uuid()] = graphics_port
+        logger.debug("Created graphics port %s.", port.path())
         return graphics_port
 
     def delete_graphics_port(self, uuid: UUID) -> None:
@@ -147,7 +162,7 @@ class GraphicsState:
     def create_graphics_connection(self, connection: Connection) -> GraphicsConnection:
         """Create a graphics connection and register it to the graphics state."""
         graphics_connection = GraphicsConnection()
-        self._graphics_graphs[connection.uuid()] = graphics_connection
+        self._graphics_connections[connection.uuid()] = graphics_connection
         logger.debug("Deleted graphics connection %s.", connection.uuid())
         return graphics_connection
 

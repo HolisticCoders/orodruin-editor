@@ -19,6 +19,7 @@ class GraphicsNodeName(QGraphicsItem):
     _parent: GraphicsNode
 
     _name_color: QColor = field(init=False)
+    _name_brush: QBrush = field(init=False)
     _name_font_family: str = field(init=False, default="Roboto")
     _name_font_size: int = field(init=False, default=10)
     _name_font: QFont = field(init=False)
@@ -29,6 +30,7 @@ class GraphicsNodeName(QGraphicsItem):
         super().__init__(parent=self._parent)
 
         self._name_color = Qt.white
+        self._name_brush = QBrush(self._name_color)
         self._name_font = QFont(self._name_font_family, self._name_font_size)
 
         self._bounding_rect = QRectF(0, 0, 0, 0)
@@ -53,5 +55,5 @@ class GraphicsNodeName(QGraphicsItem):
         )
         self._bounding_rect = path_name.boundingRect()
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QBrush(self._name_color))
+        painter.setBrush(self._name_brush)
         painter.drawPath(path_name)

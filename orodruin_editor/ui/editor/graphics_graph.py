@@ -8,6 +8,7 @@ from uuid import UUID
 
 from orodruin.core.graph import Graph, GraphLike
 from orodruin.core.node import Node
+from orodruin.core.port.port import Port
 from PySide2.QtCore import QLine, QObject, QRectF
 from PySide2.QtGui import QColor, QPainter, QPen
 from PySide2.QtWidgets import QGraphicsScene
@@ -27,6 +28,7 @@ class GraphicsGraph(QGraphicsScene):
     parent: Optional[QObject] = None
 
     _graphics_nodes: List[UUID] = field(init=False, default_factory=list)
+    _graphics_ports: List[UUID] = field(init=False, default_factory=list)
 
     _square_size: int = field(init=False, default=25)  # in pixels
     _cell_size: int = field(init=False, default=10)  # in squares
@@ -43,9 +45,12 @@ class GraphicsGraph(QGraphicsScene):
 
     @classmethod
     def from_graph(cls, graphics_state: GraphicsState, graph: Graph):
-        graphics_graph = GraphicsGraph(graphics_state, graph.uuid())
+        graphics_graph = cls(graphics_state, graph.uuid())
         graph.node_registered.subscribe(graphics_graph.register_graphics_node)
         graph.node_unregistered.subscribe(graphics_graph.unregister_graphics_node)
+        graph.port_registered.subscribe(graphics_graph.register_graphics_port)
+        # graph.port_unregistered.subscribe(graphics_graph.unregister_graphics_port)
+
         return graphics_graph
 
     def __post_init__(
@@ -88,6 +93,13 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_nodes.remove(node.uuid())
         self.removeItem(graphics_node)
         logger.debug("Unregistered graphics node %s.", node.path())
+
+    def register_graphics_port(self, port: Port):
+        """Register an existing graphics port to the graph."""
+        graphics_port = self._graphics_state.get_graphics_port(port)
+        self._graphics_ports.append(port.uuid())
+        self.addItem(graphics_port)
+        logger.debug("Registered graphics port %s.", port.path())
 
     def drawBackground(
         self,

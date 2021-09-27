@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 from uuid import UUID
 
 from orodruin.core.node import Node, NodeLike
@@ -14,6 +15,8 @@ from .graphics_node_name import GraphicsNodeName
 if TYPE_CHECKING:
     from ..graphics_state import GraphicsState
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class GraphicsNode(QGraphicsItem):
@@ -22,6 +25,8 @@ class GraphicsNode(QGraphicsItem):
     _uuid: UUID
     _name: str
     _parent: Optional[QGraphicsItem] = None
+
+    _graphics_ports: List[UUID] = field(init=False, default_factory=list)
 
     _header_height: int = field(init=False, default=5)
     _corner_radius: float = field(init=False)
@@ -45,6 +50,7 @@ class GraphicsNode(QGraphicsItem):
         parent: Optional[QGraphicsItem] = None,
     ) -> GraphicsNode:
         graphics_node = cls(graphics_state, node.uuid(), node.name(), parent)
+        node.port_registered.subscribe(graphics_node.register_graphics_port)
         return graphics_node
 
     def __post_init__(self) -> None:
@@ -75,6 +81,13 @@ class GraphicsNode(QGraphicsItem):
 
     def height(self) -> int:
         return 150
+
+    def register_graphics_port(self, port) -> None:
+        """Register an existing graphics port to the graph."""
+        graphics_port = self._graphics_state.get_graphics_port(port)
+        self._graphics_ports.append(port.uuid())
+        graphics_port.setParentItem(self)
+        logger.debug("Registered graphics port %s.", port.path())
 
     def boundingRect(self) -> QRectF:
         return QRectF(
