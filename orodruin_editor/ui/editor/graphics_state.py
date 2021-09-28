@@ -8,7 +8,10 @@ from uuid import UUID
 from orodruin.core import Connection, Graph, Node, Port, State
 
 from .graphics_graph import GraphicsGraph, GraphicsGraphLike
-from .graphics_items.graphics_connection import GraphicsConnection
+from .graphics_items.graphics_connection import (
+    GraphicsConnection,
+    GraphicsConnectionLike,
+)
 from .graphics_items.graphics_node import GraphicsNode, GraphicsNodeLike
 from .graphics_items.graphics_port import GraphicsPort, GraphicsPortLike
 
@@ -97,6 +100,20 @@ class GraphicsState:
 
         return graphics_port
 
+    def get_graphics_connection(self, connection: GraphicsConnectionLike) -> GraphicsPort:
+        """Return a registered graphics connection from a GraphicsConnectionLike object."""
+        if isinstance(connection, UUID):
+            graphics_connection = self._graphics_connections[connection]
+        elif isinstance(connection, Connection):
+            graphics_connection = self._graphics_connections[connection.uuid()]
+        elif isinstance(connection, GraphicsConnection):
+            graphics_connection = connection
+        else:
+            raise TypeError
+
+        return graphics_connection
+
+
     def get_graph(self, graph: GraphicsGraphLike) -> Graph:
         """Return a registered graph from a GraphicsGraphLike object."""
         if isinstance(graph, UUID):
@@ -161,9 +178,9 @@ class GraphicsState:
 
     def create_graphics_connection(self, connection: Connection) -> GraphicsConnection:
         """Create a graphics connection and register it to the graphics state."""
-        graphics_connection = GraphicsConnection()
+        graphics_connection = GraphicsConnection.from_connection(self, connection)
         self._graphics_connections[connection.uuid()] = graphics_connection
-        logger.debug("Deleted graphics connection %s.", connection.uuid())
+        logger.debug("Created graphics connection %s.", connection.uuid())
         return graphics_connection
 
     def delete_graphics_connection(self, uuid: UUID) -> None:

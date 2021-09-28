@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional, Union
 from uuid import UUID
 
+from orodruin.core.connection import Connection
 from orodruin.core.graph import Graph, GraphLike
 from orodruin.core.node import Node
 from orodruin.core.port.port import Port
@@ -29,6 +30,7 @@ class GraphicsGraph(QGraphicsScene):
 
     _graphics_nodes: List[UUID] = field(init=False, default_factory=list)
     _graphics_ports: List[UUID] = field(init=False, default_factory=list)
+    _graphics_connections: List[UUID] = field(init=False, default_factory=list)
 
     _square_size: int = field(init=False, default=25)  # in pixels
     _cell_size: int = field(init=False, default=10)  # in squares
@@ -50,6 +52,12 @@ class GraphicsGraph(QGraphicsScene):
         graph.node_unregistered.subscribe(graphics_graph.unregister_graphics_node)
         graph.port_registered.subscribe(graphics_graph.register_graphics_port)
         # graph.port_unregistered.subscribe(graphics_graph.unregister_graphics_port)
+        graph.connection_registered.subscribe(
+            graphics_graph.register_graphics_connection
+        )
+        # graph.connection_unregistered.subscribe(
+        #     graphics_graph.unregister_graphics_connection
+        # )
 
         return graphics_graph
 
@@ -100,6 +108,13 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_ports.append(port.uuid())
         self.addItem(graphics_port)
         logger.debug("Registered graphics port %s.", port.path())
+
+    def register_graphics_connection(self, connection: Connection):
+        """Register an existing graphics connection to the graph."""
+        graphics_connection = self._graphics_state.get_graphics_connection(connection)
+        self._graphics_connections.append(connection.uuid())
+        self.addItem(graphics_connection)
+        logger.debug("Registered graphics connection %s.", connection.uuid())
 
     def drawBackground(
         self,

@@ -74,19 +74,28 @@ class GraphicsNode(QGraphicsItem):
         self._outline_pen_selected.setWidth(self._header_height)
 
     def uuid(self) -> Node:
+        """Return the UUID of the graphics node."""
         return self._uuid
 
     def width(self) -> int:
+        """Return the width of the graphics node."""
         return 150
 
     def height(self) -> int:
-        return 150
+        """Return the height of the graphics node."""
+        return self._header_height + 25 * len(self._graphics_ports)
 
     def register_graphics_port(self, port) -> None:
         """Register an existing graphics port to the graph."""
+        index = len(self._graphics_ports)
+
         graphics_port = self._graphics_state.get_graphics_port(port)
-        self._graphics_ports.append(port.uuid())
+
         graphics_port.setParentItem(self)
+        graphics_port.setPos(0, self._header_height + graphics_port.height() * index)
+
+        self._graphics_ports.append(port.uuid())
+
         logger.debug("Registered graphics port %s.", port.path())
 
     def boundingRect(self) -> QRectF:

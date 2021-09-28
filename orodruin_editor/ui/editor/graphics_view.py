@@ -8,6 +8,8 @@ from PySide2.QtCore import QEvent, Qt
 from PySide2.QtGui import QFont, QKeyEvent, QMouseEvent, QPainter, QWheelEvent
 from PySide2.QtWidgets import QGraphicsView, QWidget
 
+from orodruin_editor.ui.editor.graphics_items.graphics_port import GraphicsPort
+
 from .graphics_items.graphics_node import GraphicsNode
 
 if TYPE_CHECKING:
@@ -151,10 +153,11 @@ class GraphicsView(QGraphicsView):
             node = self._graphics_state.get_node(item.uuid())
             graphics_graph = self._graphics_state.get_graphics_graph(node.graph())
             self._graphics_state.set_active_graph(graphics_graph)
-        # elif isinstance(item, GraphicsPort):
-        #     # We picked up on the graphics port but actually want its component
-        #     component = self.window.components[item.graphics_component().uuid()]
-        #     self.window.set_active_scene(component.graph().uuid())
+        elif isinstance(item, GraphicsPort):
+            # We picked up on the graphics port but actually want its component
+            node = self._graphics_state.get_node(item.parentItem().uuid())
+            graphics_graph = self._graphics_state.get_graphics_graph(node.graph())
+            self._graphics_state.set_active_graph(graphics_graph)
         else:
             super().mouseDoubleClickEvent(event)
 

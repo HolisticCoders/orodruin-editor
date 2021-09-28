@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from orodruin.core import PortDirection, PortType
 from orodruin.core.port.port import Port, PortLike
-from PySide2.QtCore import QRectF, Qt
+from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
+
+from orodruin_editor.ui.editor.graphics_items.graphics_socket import GraphicsSocket
 
 if TYPE_CHECKING:
     from ..graphics_state import GraphicsState
@@ -23,7 +25,7 @@ class GraphicsPort(QGraphicsItem):
     _parent: Optional[QGraphicsItem] = None
 
     _height: int = field(init=False, default=25)
-    _width: int = field(init=False, default=25)
+    _width: int = field(init=False, default=150)
     _horizontal_text_padding: int = field(init=False, default=15)
     _port_offset: int = field(init=False, default=0)
 
@@ -32,6 +34,8 @@ class GraphicsPort(QGraphicsItem):
     _name_font_family: str = field(init=False, default="Roboto")
     _name_font_size: int = field(init=False, default=10)
     _name_font: QFont = field(init=False)
+
+    _graphics_socket: GraphicsSocket = field(init=False)
 
     @classmethod
     def from_port(
@@ -58,6 +62,11 @@ class GraphicsPort(QGraphicsItem):
         self._name_brush = QBrush(self._name_color)
         self._name_font = QFont(self._name_font_family, self._name_font_size)
 
+        self._graphics_socket = GraphicsSocket(self)
+        self._graphics_socket.moveBy(
+            self.socket_position().x(), self.socket_position().y()
+        )
+
     def name(self) -> str:
         """Return the name of the graphics port."""
         return self._name
@@ -75,6 +84,25 @@ class GraphicsPort(QGraphicsItem):
 
     def height(self) -> int:
         return self._height
+
+    def graphics_socket(self) -> GraphicsSocket:
+        return self._graphics_socket
+
+    def socket_position(self) -> QPointF:
+        """Local position of the Port's socket"""
+        horizontal_offset = (
+            self._port_offset
+            if self.direction() is PortDirection.input
+            else self.width() - self._port_offset
+        )
+        return QPointF(
+            horizontal_offset,
+            self.height() / 2,
+        )
+
+    def scene_socket_position(self) -> QPointF:
+        """Global position of the Port's socket, used to attach Connections to."""
+        return self.scenePos() + self.socket_position()
 
     def boundingRect(self) -> QRectF:
         return QRectF(
