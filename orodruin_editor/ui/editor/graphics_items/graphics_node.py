@@ -51,6 +51,8 @@ class GraphicsNode(QGraphicsItem):
     ) -> GraphicsNode:
         graphics_node = cls(graphics_state, node.uuid(), node.name(), parent)
         node.port_registered.subscribe(graphics_node.register_graphics_port)
+        # node.port_unregistered.subscribe(graphics_node.register_graphics_port)
+        node.name_changed.subscribe(graphics_node.set_name)
         return graphics_node
 
     def __post_init__(self) -> None:
@@ -65,7 +67,7 @@ class GraphicsNode(QGraphicsItem):
         self._background_color = QColor("#333333")
         self._background_brush = QBrush(self._background_color)
 
-        self._name_item = GraphicsNodeName(self._name, self)
+        self._name_item = GraphicsNodeName(self._graphics_state, self._name, self)
 
         self._corner_radius = self._header_height / 2
 
@@ -76,6 +78,12 @@ class GraphicsNode(QGraphicsItem):
     def uuid(self) -> Node:
         """Return the UUID of the graphics node."""
         return self._uuid
+
+    def name(self) -> str:
+        return self._name
+
+    def set_name(self, name: str) -> None:
+        self._name = name
 
     def width(self) -> int:
         """Return the width of the graphics node."""

@@ -26,6 +26,8 @@ class GraphicsConnection(QGraphicsPathItem):
     _target_graphics_port: Optional[GraphicsPort] = None
     _parent: Optional[QGraphicsItem] = None
 
+    _mouse_position: QPointF = field(init=False)
+
     _gradient: QLinearGradient = field(init=False)
     _unselected_pen: QPen = field(init=False)
     _selected_pen: QPen = field(init=False)
@@ -51,11 +53,25 @@ class GraphicsConnection(QGraphicsPathItem):
     def __post_init__(self) -> None:
         super().__init__(parent=self._parent)
 
+        self._mouse_position = QPointF(0, 0)
+
         self._gradient = QLinearGradient(0, 0, 0, 0)
         self._unselected_pen = QPen(self._gradient, 2)
         self._selected_pen = QPen(Qt.white)
         self._unselected_pen.setWidth(2)
         self._selected_pen.setWidth(2)
+
+    def source_graphics_port(self) -> GraphicsPort:
+        return self._source_graphics_port
+
+    def target_graphics_port(self) -> GraphicsPort:
+        return self._target_graphics_port
+
+    def mouse_position(self) -> QPointF:
+        return self._mouse_position
+
+    def set_mouse_position(self, position: QPointF):
+        self._mouse_position = position
 
     def source_position(self) -> QPointF:
         """Returns the position of the source graphics port."""

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Union
+from uuid import UUID
 
 from orodruin.core import PortDirection, PortType
 from orodruin.core.port.port import Port, PortLike
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 class GraphicsPort(QGraphicsItem):
 
     _graphics_state: GraphicsState
+    _uuid: UUID
     _name: str
     _direction: PortDirection
     _port_type: PortType
@@ -46,6 +48,7 @@ class GraphicsPort(QGraphicsItem):
     ):
         graphics_port = cls(
             graphics_state,
+            port.uuid(),
             port.name(),
             port.direction(),
             port.type(),
@@ -66,6 +69,9 @@ class GraphicsPort(QGraphicsItem):
         self._graphics_socket.moveBy(
             self.socket_position().x(), self.socket_position().y()
         )
+
+    def uuid(self) -> UUID:
+        return self._uuid
 
     def name(self) -> str:
         """Return the name of the graphics port."""
