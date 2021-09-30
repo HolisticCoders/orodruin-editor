@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
@@ -26,18 +27,25 @@ class PortColor(Enum):
     str = QColor("#f0c674")
 
 
+@dataclass
 class GraphicsSocket(QGraphicsItem):
     """Graphical representation of a Socket
 
     Orodruin has no socket concept, this only exists to register events more precisely.
     """
 
-    def __init__(self, graphics_port: GraphicsPort) -> None:
-        super().__init__(parent=graphics_port)
+    _graphics_port: GraphicsPort
 
-        self._graphics_port = graphics_port
+    _radius: int = field(init=False, default=6)
+    _color_outline: QColor = field(init=False)
+    _color_background: QColor = field(init=False)
 
-        self.radius = 6
+    _pen: QPen = field(init=False)
+    _brush: QBrush = field(init=False)
+
+    def __post_init__(self) -> None:
+        super().__init__(parent=self._graphics_port)
+
         self._color_outline = QColor("#101010")
         self._color_background = QColor(Qt.white)
 
@@ -59,7 +67,7 @@ class GraphicsSocket(QGraphicsItem):
 
     def color(self) -> QColor:
         """Color the Socket should have"""
-        port_type = self._graphics_port.port_type()
+        port_type = self._graphics_port.type()
         try:
             color = PortColor[port_type.__name__].value
         except:
@@ -70,10 +78,10 @@ class GraphicsSocket(QGraphicsItem):
         # return a bigger bounding rect than the visual socket
         # to make it easier to interact with
         return QRectF(
-            -self.radius * 2,
-            -self.radius * 2,
-            2 * self.radius * 2,
-            2 * self.radius * 2,
+            -self._radius * 2,
+            -self._radius * 2,
+            2 * self._radius * 2,
+            2 * self._radius * 2,
         )
 
     def paint(
@@ -85,8 +93,8 @@ class GraphicsSocket(QGraphicsItem):
         painter.setPen(self._pen)
         painter.setBrush(self._brush)
         painter.drawEllipse(
-            -self.radius,
-            -self.radius,
-            2 * self.radius,
-            2 * self.radius,
+            -self._radius,
+            -self._radius,
+            2 * self._radius,
+            2 * self._radius,
         )

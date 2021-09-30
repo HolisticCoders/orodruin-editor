@@ -15,7 +15,7 @@
 			"name": "Orodruin Application",
 			"type": "python",
 			"request": "launch",
-			"program": "${workspaceFolder}/orodruin_editor/main.py",
+			"program": "${workspaceFolder}/main.py",
 			"console": "integratedTerminal"
 		}
 	]

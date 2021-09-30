@@ -1,52 +1,50 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, Optional
-from uuid import UUID
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Optional
 
 import orodruin.commands
-from orodruin.core import PortDirection
-from orodruin.core.graph import Graph
-from PySide2.QtCore import QEvent, QRectF, Qt
-from PySide2.QtGui import (
-    QBrush,
-    QFont,
-    QKeyEvent,
-    QMouseEvent,
-    QPainter,
-    QPainterPath,
-    QWheelEvent,
-)
-from PySide2.QtWidgets import QGraphicsView
+from orodruin.core.port.port import PortDirection
+from PySide2.QtCore import QEvent, Qt
+from PySide2.QtGui import QFont, QKeyEvent, QMouseEvent, QPainter, QWheelEvent
+from PySide2.QtWidgets import QGraphicsView, QWidget
 
-from orodruin_editor.gui.editor.graphics_component_name import GraphicsComponentName
-from orodruin_editor.gui.editor.graphics_scene import GraphicsScene
-from orodruin_editor.gui.editor.graphics_socket import GraphicsSocket
+from orodruin_editor.ui.editor.graphics_items.graphics_node_name import GraphicsNodeName
 
-from .graphics_component import GraphicsComponent
-from .graphics_connection import GraphicsConnection
-from .graphics_port import GraphicsPort
+from .graphics_items.graphics_connection import GraphicsConnection
+from .graphics_items.graphics_node import GraphicsNode
+from .graphics_items.graphics_port import GraphicsPort
+from .graphics_items.graphics_socket import GraphicsSocket
 
 if TYPE_CHECKING:
-    from orodruin_editor.gui.editor_window import OrodruinEditorWindow
+    from .graphics_state import GraphicsState
+
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class GraphicsView(QGraphicsView):
     """GraphicsView for the orodruin editor."""
 
-    def __init__(
-        self,
-        window: OrodruinEditorWindow,
-    ) -> None:
-        super().__init__(parent=window)
+    _parent: Optional[QWidget] = None
 
-        self.window = window
-        self.zoom_in_factor = 1.25
-        self.zoom_step = 1
+    _graphics_state: GraphicsState = field(init=False)
 
-        self._path_font = QFont("Roboto", 20)
+    _zoom_in_factor: float = field(init=False, default=1.25)
+    _font_family: str = field(init=False, default="Roboto")
+    _font_size: int = field(init=False, default=20)
+    _path_font: QFont = field(init=False)
+
+    _temporary_connection: Optional[GraphicsConnection] = field(
+        init=False, default=None
+    )
+
+    def __post_init__(self) -> None:
+        super().__init__(parent=self._parent)
+
+        self._path_font = QFont(self._font_family, self._font_size)
 
         self.setRenderHints(
             QPainter.Antialiasing
@@ -62,7 +60,11 @@ class GraphicsView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        self._temporary_connection: Optional[GraphicsConnection] = None
+    def graphics_state(self) -> GraphicsState:
+        return self._graphics_state
+
+    def set_graphics_state(self, state: GraphicsState):
+        self._graphics_state = state
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
@@ -92,9 +94,9 @@ class GraphicsView(QGraphicsView):
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         if event.angleDelta().y() > 0:
-            zoom_factor = self.zoom_in_factor
+            zoom_factor = self._zoom_in_factor
         else:
-            zoom_factor = 1 / self.zoom_in_factor
+            zoom_factor = 1 / self._zoom_in_factor
         self.scale(zoom_factor, zoom_factor)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -114,6 +116,8 @@ class GraphicsView(QGraphicsView):
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_Delete:
             self.on_del_released(event)
+        elif event.key() == Qt.Key_G and event.modifiers() == Qt.ControlModifier:
+            self.on_control_g_released(event)
         else:
             super().keyReleaseEvent(event)
 
@@ -123,13 +127,15 @@ class GraphicsView(QGraphicsView):
         if isinstance(item, GraphicsSocket):
             if item.direction() == PortDirection.output:
                 self._temporary_connection = GraphicsConnection(
-                    source_graphics_port=item._graphics_port,
-                    target_graphics_port=None,
+                    self._graphics_state,
+                    _source_graphics_port=item._graphics_port,
+                    _target_graphics_port=None,
                 )
             else:
                 self._temporary_connection = GraphicsConnection(
-                    source_graphics_port=None,
-                    target_graphics_port=item._graphics_port,
+                    self._graphics_state,
+                    _source_graphics_port=None,
+                    _target_graphics_port=item._graphics_port,
                 )
             self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self.scene().addItem(self._temporary_connection)
@@ -159,26 +165,25 @@ class GraphicsView(QGraphicsView):
 
         if isinstance(item, (GraphicsSocket, GraphicsPort)):
             if self._temporary_connection:
-                if self._temporary_connection.source_graphics_port:
-                    source_id = self._temporary_connection.source_graphics_port.uuid()
+                if self._temporary_connection.source_graphics_port():
+                    source_id = self._temporary_connection.source_graphics_port().uuid()
                     target_id = item.uuid()
                 else:
                     source_id = item.uuid()
-                    target_id = self._temporary_connection.target_graphics_port.uuid()
+                    target_id = self._temporary_connection.target_graphics_port().uuid()
 
-                source = self.window.ports[source_id]
-                target = self.window.ports[target_id]
                 connect_port_command = orodruin.commands.ConnectPorts(
-                    self.window.active_scene.graph(),
-                    source,
-                    target,
+                    self._graphics_state.state(),
+                    self._graphics_state.active_graph().uuid(),
+                    source_id,
+                    target_id,
                     force=True,
                 )
                 try:
                     connect_port_command.do()
                 except Exception as e:
-                    logger.warning(e)
-        elif isinstance(item, GraphicsComponentName):
+                    logger.error(e)
+        elif isinstance(item, GraphicsNodeName):
             item.init_rename()
         super().mouseReleaseEvent(event)
 
@@ -208,19 +213,22 @@ class GraphicsView(QGraphicsView):
         item = self.itemAt(event.pos())
 
         if item is None:
-            graph = self.window.active_scene.graph()
-            component = graph.parent_component()
-            if component:
-                parent_graph = component.parent_graph()
+            graphics_graph = self._graphics_state.active_graph()
+            graph = self._graphics_state.get_graph(graphics_graph)
+            node = graph.parent_node()
+            if node:
+                parent_graph = node.parent_graph()
                 if parent_graph:
-                    self.window.set_active_scene(parent_graph.uuid())
-        elif isinstance(item, GraphicsComponent):
-            component = self.window.components[item.uuid()]
-            self.window.set_active_scene(component.graph().uuid())
+                    self._graphics_state.set_active_graph(parent_graph)
+        elif isinstance(item, GraphicsNode):
+            node = self._graphics_state.get_node(item.uuid())
+            graphics_graph = self._graphics_state.get_graphics_graph(node.graph())
+            self._graphics_state.set_active_graph(graphics_graph)
         elif isinstance(item, GraphicsPort):
             # We picked up on the graphics port but actually want its component
-            component = self.window.components[item.graphics_component().uuid()]
-            self.window.set_active_scene(component.graph().uuid())
+            node = self._graphics_state.get_node(item.parentItem().uuid())
+            graphics_graph = self._graphics_state.get_graphics_graph(node.graph())
+            self._graphics_state.set_active_graph(graphics_graph)
         else:
             super().mouseDoubleClickEvent(event)
 
@@ -235,48 +243,36 @@ class GraphicsView(QGraphicsView):
     def on_del_released(self, event: QKeyEvent):
         """Handle del key released event."""
         selected_items = self.scene().selectedItems()
-        for item in selected_items:
-            if isinstance(item, GraphicsComponent):
-                orodruin.commands.DeleteComponent(
-                    self.window.active_scene.graph(),
-                    item.uuid(),
+        selected_nodes = [
+            item for item in selected_items if isinstance(item, GraphicsNode)
+        ]
+        selected_connections = [
+            item for item in selected_items if isinstance(item, GraphicsConnection)
+        ]
+        for graphics_connection in selected_connections:
+            orodruin.commands.DisconnectPorts(
+                self._graphics_state.state(),
+                self._graphics_state.active_graph().uuid(),
+                graphics_connection.source_graphics_port().uuid(),
+                graphics_connection.target_graphics_port().uuid(),
+            ).do()
+
+        for graphics_node in selected_nodes:
+            if isinstance(graphics_node, GraphicsNode):
+                orodruin.commands.DeleteNode(
+                    self._graphics_state.state(),
+                    graphics_node.uuid(),
                 ).do()
-            if isinstance(item, GraphicsConnection):
-                source = self.window.ports.get(item.source_graphics_port.uuid())
-                target = self.window.ports.get(item.target_graphics_port.uuid())
 
-                # The connection might have already been deleted
-                # when its source or target was deleted
-                if not source or not target:
-                    continue
+    def on_control_g_released(self, event: QKeyEvent):
+        """Handle control-g released event."""
+        selected_items = self.scene().selectedItems()
+        selected_nodes_ids = [
+            item.uuid() for item in selected_items if isinstance(item, GraphicsNode)
+        ]
 
-                orodruin.commands.DisconnectPorts(
-                    self.window.active_scene.graph(),
-                    source,
-                    target,
-                ).do()
-
-    def drawForeground(
-        self,
-        painter: QPainter,
-        rect: QRectF,  # pylint: disable=unused-argument
-    ) -> None:
-        """Draw Path of the currently active component"""
-        area = self.mapToScene(self.viewport().geometry()).boundingRect()
-
-        component = self.scene().graph().parent_component()
-        if component:
-            text = str(component.path())
-        else:
-            text = "/"
-
-        path_name = QPainterPath()
-        path_name.addText(
-            area.x() + 25,
-            area.y() + 40,
-            self._path_font,
-            text,
-        )
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QBrush(Qt.darkGray))
-        painter.drawPath(path_name)
+        orodruin.commands.GroupNodes(
+            self._graphics_state.state(),
+            self._graphics_state.active_graph().uuid(),
+            selected_nodes_ids,
+        ).do()
