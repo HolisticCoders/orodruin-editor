@@ -10,8 +10,8 @@ from orodruin.core.connection import Connection
 from orodruin.core.graph import Graph, GraphLike
 from orodruin.core.node import Node
 from orodruin.core.port.port import Port
-from PySide2.QtCore import QLine, QObject, QRectF
-from PySide2.QtGui import QColor, QPainter, QPen
+from PySide2.QtCore import QLine, QObject, QRectF, Qt
+from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsScene
 
 if TYPE_CHECKING:
@@ -149,6 +149,30 @@ class GraphicsGraph(QGraphicsScene):
         painter.drawLines(square_lines)
         painter.setPen(self._pen_cell)
         painter.drawLines(cell_lines)
+
+    def drawForeground(
+        self,
+        painter: QPainter,
+        rect: QRectF,
+    ) -> None:
+
+        graph = self._graphics_state.state().graph_from_graphlike(self.uuid())
+        parent_node = graph.parent_node()
+        if parent_node:
+            path_text = str(parent_node.path())
+        else:
+            path_text = "/"
+
+        path_name = QPainterPath()
+        path_name.addText(
+            rect.x() + 25,
+            rect.y() + 40,
+            QFont("Roboto", 20),
+            path_text,
+        )
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(Qt.darkGray))
+        painter.drawPath(path_name)
 
 
 GraphicsGraphLike = Union[GraphicsGraph, GraphLike]
