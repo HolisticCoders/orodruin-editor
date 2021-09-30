@@ -61,6 +61,9 @@ class GraphicsConnection(QGraphicsPathItem):
         self._unselected_pen.setWidth(2)
         self._selected_pen.setWidth(2)
 
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setZValue(-1)
+
     def source_graphics_port(self) -> GraphicsPort:
         return self._source_graphics_port
 

@@ -243,26 +243,26 @@ class GraphicsView(QGraphicsView):
     def on_del_released(self, event: QKeyEvent):
         """Handle del key released event."""
         selected_items = self.scene().selectedItems()
-        for item in selected_items:
-            if isinstance(item, GraphicsNode):
+        selected_nodes = [
+            item for item in selected_items if isinstance(item, GraphicsNode)
+        ]
+        selected_connections = [
+            item for item in selected_items if isinstance(item, GraphicsConnection)
+        ]
+        for graphics_connection in selected_connections:
+            orodruin.commands.DisconnectPorts(
+                self._graphics_state.state(),
+                self._graphics_state.active_graph().uuid(),
+                graphics_connection.source_graphics_port().uuid(),
+                graphics_connection.target_graphics_port().uuid(),
+            ).do()
+
+        for graphics_node in selected_nodes:
+            if isinstance(graphics_node, GraphicsNode):
                 orodruin.commands.DeleteNode(
                     self._graphics_state.state(),
-                    item.uuid(),
+                    graphics_node.uuid(),
                 ).do()
-            # if isinstance(item, GraphicsConnection):
-            #     source = self.window.ports.get(item.source_graphics_port.uuid())
-            #     target = self.window.ports.get(item.target_graphics_port.uuid())
-
-            #     # The connection might have already been deleted
-            #     # when its source or target was deleted
-            #     if not source or not target:
-            #         continue
-
-            #     orodruin.commands.DisconnectPorts(
-            #         self.window.active_scene.graph(),
-            #         source,
-            #         target,
-            #     ).do()
 
     def on_control_g_released(self, event: QKeyEvent):
         """Handle control-g released event."""

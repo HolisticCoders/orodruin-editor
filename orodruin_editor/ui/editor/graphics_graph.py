@@ -55,9 +55,9 @@ class GraphicsGraph(QGraphicsScene):
         graph.connection_registered.subscribe(
             graphics_graph.register_graphics_connection
         )
-        # graph.connection_unregistered.subscribe(
-        #     graphics_graph.unregister_graphics_connection
-        # )
+        graph.connection_unregistered.subscribe(
+            graphics_graph.unregister_graphics_connection
+        )
 
         return graphics_graph
 
@@ -115,6 +115,13 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_connections.append(connection.uuid())
         self.addItem(graphics_connection)
         logger.debug("Registered graphics connection %s.", connection.uuid())
+
+    def unregister_graphics_connection(self, connection: Connection):
+        """Unregister an existing graphics connection from the graph."""
+        graphics_connection = self._graphics_state.get_graphics_connection(connection)
+        self._graphics_connections.remove(connection.uuid())
+        self.removeItem(graphics_connection)
+        logger.debug("Unregistered graphics connection %s.", connection.uuid())
 
     def drawBackground(
         self,
