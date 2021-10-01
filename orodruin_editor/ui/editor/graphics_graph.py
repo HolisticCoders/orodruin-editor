@@ -3,19 +3,22 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Optional, Union
-from uuid import UUID
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from uuid import UUID, uuid4
 
 from orodruin.core.connection import Connection
 from orodruin.core.graph import Graph, GraphLike
 from orodruin.core.node import Node
-from orodruin.core.port.port import Port
+from orodruin.core.port.port import Port, PortDirection
 from PySide2.QtCore import QLine, QObject, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsScene
 
+from .graphics_items.graphics_node import GraphicsNode
+from .graphics_items.graphics_port import GraphicsPort
+
 if TYPE_CHECKING:
-    from orodruin_editor.ui.editor.graphics_state import GraphicsState
+    from .graphics_state import GraphicsState
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,12 @@ class GraphicsGraph(QGraphicsScene):
     _graphics_nodes: List[UUID] = field(init=False, default_factory=list)
     _graphics_ports: List[UUID] = field(init=False, default_factory=list)
     _graphics_connections: List[UUID] = field(init=False, default_factory=list)
+
+    _input_graphics_node: Optional[GraphicsNode] = field(init=False, default=None)
+    _output_graphics_node: Optional[GraphicsNode] = field(init=False, default=None)
+    _virtual_graphics_ports: Dict[GraphicsPort] = field(
+        init=False, default_factory=dict
+    )
 
     _square_size: int = field(init=False, default=25)  # in pixels
     _cell_size: int = field(init=False, default=10)  # in squares
@@ -59,6 +68,12 @@ class GraphicsGraph(QGraphicsScene):
             graphics_graph.unregister_graphics_connection
         )
 
+        if graph.parent_node():
+            graphics_graph._create_input_output_nodes()
+            graph.parent_node().port_registered.subscribe(
+                graphics_graph._create_virtual_port
+            )
+
         return graphics_graph
 
     def __post_init__(
@@ -83,6 +98,29 @@ class GraphicsGraph(QGraphicsScene):
         )
 
         self.setBackgroundBrush(self._background_color)
+
+    def _create_input_output_nodes(self) -> None:
+        self._input_graphics_node = GraphicsNode(self._graphics_state, uuid4(), "Input")
+        self.addItem(self._input_graphics_node)
+
+        self._output_graphics_node = GraphicsNode(
+            self._graphics_state, uuid4(), "Output"
+        )
+        self.addItem(self._output_graphics_node)
+
+    def _create_virtual_port(self, port: Port) -> None:
+        if port.direction() is PortDirection.input:
+            graphics_node = self._input_graphics_node
+            direction = PortDirection.output
+        else:
+            graphics_node = self._output_graphics_node
+            direction = PortDirection.input
+
+        graphics_port = GraphicsPort(
+            self._graphics_state, port.uuid(), port.name(), direction, port.type()
+        )
+        graphics_node.register_graphics_port(graphics_port)
+        self._virtual_graphics_ports[port.uuid()] = graphics_port
 
     def uuid(self) -> UUID:
         """Return the UUID of the graph."""
@@ -114,6 +152,23 @@ class GraphicsGraph(QGraphicsScene):
         graphics_connection = self._graphics_state.get_graphics_connection(connection)
         self._graphics_connections.append(connection.uuid())
         self.addItem(graphics_connection)
+
+        connection = self._graphics_state.state().connection_from_connectionlike(
+            graphics_connection.uuid()
+        )
+
+        virtual_source_graphics_port = self._virtual_graphics_ports.get(
+            connection.source().uuid()
+        )
+        if virtual_source_graphics_port:
+            graphics_connection.set_source_graphics_port(virtual_source_graphics_port)
+
+        virtual_target_graphics_port = self._virtual_graphics_ports.get(
+            connection.target().uuid()
+        )
+        if virtual_target_graphics_port:
+            graphics_connection.set_target_graphics_port(virtual_target_graphics_port)
+
         logger.debug("Registered graphics connection %s.", connection.uuid())
 
     def unregister_graphics_connection(self, connection: Connection):

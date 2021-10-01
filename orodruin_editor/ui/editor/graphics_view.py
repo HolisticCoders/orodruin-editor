@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
+from uuid import uuid4
 
 import orodruin.commands
 from orodruin.core.port.port import PortDirection
@@ -126,17 +127,17 @@ class GraphicsView(QGraphicsView):
         item = self.itemAt(event.pos())
         if isinstance(item, GraphicsSocket):
             if item.direction() == PortDirection.output:
-                self._temporary_connection = GraphicsConnection(
-                    self._graphics_state,
-                    _source_graphics_port=item._graphics_port,
-                    _target_graphics_port=None,
-                )
+                source = item._graphics_port
+                target = None
             else:
-                self._temporary_connection = GraphicsConnection(
-                    self._graphics_state,
-                    _source_graphics_port=None,
-                    _target_graphics_port=item._graphics_port,
-                )
+                source = None
+                target = item._graphics_port
+            self._temporary_connection = GraphicsConnection(
+                self._graphics_state,
+                uuid4(),
+                _source_graphics_port=source,
+                _target_graphics_port=target,
+            )
             self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self.scene().addItem(self._temporary_connection)
         else:

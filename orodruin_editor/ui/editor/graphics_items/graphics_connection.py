@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Union
+from uuid import UUID
 
 from orodruin.core.connection import Connection, ConnectionLike
 from PySide2.QtCore import QPointF, Qt
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 @dataclass
 class GraphicsConnection(QGraphicsPathItem):
     _graphics_state: GraphicsState
+    _uuid: UUID
 
     _source_graphics_port: Optional[GraphicsPort] = None
     _target_graphics_port: Optional[GraphicsPort] = None
@@ -45,6 +47,7 @@ class GraphicsConnection(QGraphicsPathItem):
 
         return cls(
             graphics_state,
+            connection.uuid(),
             source_graphics_port,
             target_graphics_port,
             _parent=parent,
@@ -64,11 +67,20 @@ class GraphicsConnection(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setZValue(-1)
 
+    def uuid(self) -> UUID:
+        return self._uuid
+
     def source_graphics_port(self) -> GraphicsPort:
         return self._source_graphics_port
 
     def target_graphics_port(self) -> GraphicsPort:
         return self._target_graphics_port
+
+    def set_source_graphics_port(self, graphics_port: GraphicsPort) -> None:
+        self._source_graphics_port = graphics_port
+
+    def set_target_graphics_port(self, graphics_port: GraphicsPort) -> None:
+        self._target_graphics_port = graphics_port
 
     def mouse_position(self) -> QPointF:
         return self._mouse_position

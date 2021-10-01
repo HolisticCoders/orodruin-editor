@@ -11,6 +11,7 @@ from PySide2.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 from .graphics_node_name import GraphicsNodeName
+from .graphics_port import GraphicsPort, GraphicsPortLike
 
 if TYPE_CHECKING:
     from ..graphics_state import GraphicsState
@@ -93,18 +94,21 @@ class GraphicsNode(QGraphicsItem):
         """Return the height of the graphics node."""
         return self._header_height + 25 * len(self._graphics_ports)
 
-    def register_graphics_port(self, port) -> None:
+    def register_graphics_port(self, port: GraphicsPortLike) -> None:
         """Register an existing graphics port to the graph."""
         index = len(self._graphics_ports)
 
-        graphics_port = self._graphics_state.get_graphics_port(port)
+        if isinstance(port, GraphicsPort):
+            graphics_port = port
+        else:
+            graphics_port = self._graphics_state.get_graphics_port(port)
 
         graphics_port.setParentItem(self)
         graphics_port.setPos(0, self._header_height + graphics_port.height() * index)
 
         self._graphics_ports.append(port.uuid())
 
-        logger.debug("Registered graphics port %s.", port.path())
+        logger.debug("Registered graphics port %s.", port.uuid())
 
     def boundingRect(self) -> QRectF:
         return QRectF(
