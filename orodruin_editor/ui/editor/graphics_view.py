@@ -8,8 +8,15 @@ from uuid import uuid4
 import orodruin.commands
 from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QEvent, Qt
-from PySide2.QtGui import QFont, QKeyEvent, QMouseEvent, QPainter, QWheelEvent
-from PySide2.QtWidgets import QGraphicsView, QWidget
+from PySide2.QtGui import (
+    QContextMenuEvent,
+    QFont,
+    QKeyEvent,
+    QMouseEvent,
+    QPainter,
+    QWheelEvent,
+)
+from PySide2.QtWidgets import QGraphicsView, QInputDialog, QMenu, QWidget
 
 from orodruin_editor.ui.editor.graphics_items.graphics_node_name import GraphicsNodeName
 
@@ -280,4 +287,38 @@ class GraphicsView(QGraphicsView):
             self._graphics_state.state(),
             self._graphics_state.active_graph().uuid(),
             selected_nodes_ids,
+        ).do()
+
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        item = self.itemAt(event.pos())
+        if isinstance(item, GraphicsPort):
+            self.on_port_context_menu_event(item, event)
+        return super().contextMenuEvent(event)
+
+    def on_port_context_menu_event(
+        self,
+        graphics_port: GraphicsPort,
+        event: QContextMenuEvent,
+    ):
+        """Create the port context menu."""
+        context_menu = QMenu(self)
+        rename_port_action = context_menu.addAction("Rename Port")
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+
+        if action == rename_port_action:
+            self.on_rename_port(graphics_port)
+
+    def on_rename_port(self, graphics_port: GraphicsPort):
+        """Rename the port."""
+        port = self._graphics_state.state().port_from_portlike(graphics_port.uuid())
+        rename_port_dialog = QInputDialog()
+        rename_port_dialog.setWindowTitle("Rename Port")
+        rename_port_dialog.setLabelText("Enter New Port Name")
+        rename_port_dialog.setTextValue(port.name())
+        rename_port_dialog.exec_()
+        new_name = rename_port_dialog.textValue()
+        orodruin.commands.RenamePort(
+            self._graphics_state.state(),
+            port,
+            new_name,
         ).do()

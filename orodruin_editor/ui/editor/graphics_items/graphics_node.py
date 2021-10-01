@@ -81,9 +81,11 @@ class GraphicsNode(QGraphicsItem):
         return self._uuid
 
     def name(self) -> str:
+        """Return the name of the graphics node."""
         return self._name
 
     def set_name(self, name: str) -> None:
+        """Set the name of the graphics node."""
         self._name = name
 
     def width(self) -> int:

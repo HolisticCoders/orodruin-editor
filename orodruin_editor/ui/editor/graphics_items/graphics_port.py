@@ -45,7 +45,7 @@ class GraphicsPort(QGraphicsItem):
         graphics_state: GraphicsState,
         port: Port,
         parent: Optional[QGraphicsItem] = None,
-    ):
+    ) -> GraphicsPort:
         graphics_port = cls(
             graphics_state,
             port.uuid(),
@@ -54,6 +54,7 @@ class GraphicsPort(QGraphicsItem):
             port.type(),
             parent,
         )
+        port.name_changed.subscribe(graphics_port.set_name)
         return graphics_port
 
     def __post_init__(
@@ -76,6 +77,10 @@ class GraphicsPort(QGraphicsItem):
     def name(self) -> str:
         """Return the name of the graphics port."""
         return self._name
+
+    def set_name(self, name: str) -> None:
+        """Set the name of the graphics port."""
+        self._name = name
 
     def direction(self) -> PortDirection:
         """Return the direction of the graphics port."""
