@@ -114,11 +114,15 @@ class GraphicsView(QGraphicsView):
             self._temporary_connection.update_path()
         return super().mouseMoveEvent(event)
 
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_G and event.modifiers() == Qt.ControlModifier:
+            self.on_control_g_pressed(event)
+        else:
+            return super().keyPressEvent(event)
+
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_Delete:
             self.on_del_released(event)
-        elif event.key() == Qt.Key_G and event.modifiers() == Qt.ControlModifier:
-            self.on_control_g_released(event)
         else:
             super().keyReleaseEvent(event)
 
@@ -265,7 +269,7 @@ class GraphicsView(QGraphicsView):
                     graphics_node.uuid(),
                 ).do()
 
-    def on_control_g_released(self, event: QKeyEvent):
+    def on_control_g_pressed(self, event: QKeyEvent):
         """Handle control-g released event."""
         selected_items = self.scene().selectedItems()
         selected_nodes_ids = [
