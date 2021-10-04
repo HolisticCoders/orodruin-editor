@@ -24,6 +24,7 @@ class GraphicsPort(QGraphicsItem):
     _name: str
     _direction: PortDirection
     _port_type: PortType
+    _parent_port_id: Optional[UUID] = None
     _parent: Optional[QGraphicsItem] = None
 
     _height: int = field(init=False, default=25)
@@ -46,12 +47,17 @@ class GraphicsPort(QGraphicsItem):
         port: Port,
         parent: Optional[QGraphicsItem] = None,
     ) -> GraphicsPort:
+        if port.parent_port():
+            parent_port_id = port.parent_port().uuid()
+        else:
+            parent_port_id = None
         graphics_port = cls(
             graphics_state,
             port.uuid(),
             port.name(),
             port.direction(),
             port.type(),
+            parent_port_id,
             parent,
         )
         port.name_changed.subscribe(graphics_port.set_name)
@@ -137,12 +143,17 @@ class GraphicsPort(QGraphicsItem):
             self.name(),
         )
 
+        padding = (
+            self._horizontal_text_padding
+            if not self._parent_port_id
+            else self._horizontal_text_padding * 2
+        )
         horizontal_offset = (
-            self._port_offset + self._horizontal_text_padding
+            self._port_offset + padding
             if self.direction() is PortDirection.input
             else self.width()
             - path_name.boundingRect().width()
-            - self._horizontal_text_padding
+            - padding
             - self._port_offset
         )
         path_name.translate(
