@@ -6,9 +6,12 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from uuid import UUID
 
 from orodruin.core.node import Node, NodeLike
+from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
+
+from orodruin_editor.ui.editor.graphics_items.port_layout import PortLayout
 
 from .graphics_node_name import GraphicsNodeName
 from .graphics_port import GraphicsPort, GraphicsPortLike
@@ -42,6 +45,8 @@ class GraphicsNode(QGraphicsItem):
     _outline_pen_selected: QPen = field(init=False)
 
     _name_item: GraphicsNodeName = field(init=False)
+    _input_port_layout: PortLayout = field(init=False)
+    _output_port_layout: PortLayout = field(init=False)
 
     @classmethod
     def from_node(
@@ -76,6 +81,11 @@ class GraphicsNode(QGraphicsItem):
         self._outline_pen_selected = QPen(Qt.white)
         self._outline_pen_selected.setWidth(self._header_height)
 
+        self._output_port_layout = PortLayout(self)
+        self._output_port_layout.setPos(0, self._header_height)
+        self._input_port_layout = PortLayout(self)
+        self._update_input_port_pos()
+
     def uuid(self) -> Node:
         """Return the UUID of the graphics node."""
         return self._uuid
@@ -94,23 +104,42 @@ class GraphicsNode(QGraphicsItem):
 
     def height(self) -> int:
         """Return the height of the graphics node."""
-        return self._header_height + 25 * len(self._graphics_ports)
+        return (
+            self._header_height
+            + self._input_port_layout.boundingRect().height()
+            + self._output_port_layout.boundingRect().height()
+        )
 
     def register_graphics_port(self, port: GraphicsPortLike) -> None:
         """Register an existing graphics port to the graph."""
-        index = len(self._graphics_ports)
 
         if isinstance(port, GraphicsPort):
             graphics_port = port
         else:
             graphics_port = self._graphics_state.get_graphics_port(port)
 
-        graphics_port.setParentItem(self)
-        graphics_port.setPos(0, self._header_height + graphics_port.height() * index)
+        if graphics_port.direction() is PortDirection.input:
+            index = len(self._input_port_layout.childItems())
+            port_layout = self._input_port_layout
+        else:
+            index = len(self._output_port_layout.childItems())
+            port_layout = self._output_port_layout
+
+        graphics_port.setParentItem(port_layout)
+        graphics_port.setPos(0, graphics_port.height() * index)
+
+        self._update_input_port_pos()
 
         self._graphics_ports.append(port.uuid())
 
         logger.debug("Registered graphics port %s.", port.uuid())
+
+    def _update_input_port_pos(self) -> None:
+        y = (
+            self._output_port_layout.boundingRect().y()
+            + self._output_port_layout.boundingRect().height()
+        )
+        self._input_port_layout.setPos(0, y)
 
     def boundingRect(self) -> QRectF:
         return QRectF(
