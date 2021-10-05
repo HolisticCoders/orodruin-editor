@@ -124,6 +124,9 @@ class GraphicsNode(QGraphicsItem):
             graphics_port = self._graphics_state.get_graphics_port(graphics_port)
 
         parent_port = graphics_port.parent_port()
+        if parent_port and graphics_port.is_virtual():
+            parent_port = self.scene().get_virtual_port(parent_port.uuid())
+
         if parent_port:
             port_layout = parent_port.child_ports_layout()
         elif graphics_port.direction() is PortDirection.input:

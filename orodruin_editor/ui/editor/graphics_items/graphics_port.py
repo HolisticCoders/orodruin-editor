@@ -29,6 +29,7 @@ class GraphicsPort(LayoutItem):
     _direction: PortDirection
     _port_type: PortType
     _parent_port_id: Optional[UUID] = None
+    _is_virtual: bool = False
     _parent: Optional[QGraphicsItem] = None
 
     _height: int = field(init=False, default=25)
@@ -105,6 +106,9 @@ class GraphicsPort(LayoutItem):
     def type(self) -> PortType:
         """Return the type of the graphics port."""
         return self._port_type
+
+    def is_virtual(self) -> bool:
+        return self._is_virtual
 
     def width(self) -> int:
         return self._width
