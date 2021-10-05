@@ -237,10 +237,10 @@ class GraphicsView(QGraphicsView):
             graphics_graph = self._graphics_state.get_graphics_graph(node.graph())
             self._graphics_state.set_active_graph(graphics_graph)
         elif isinstance(item, GraphicsPort):
-            # We picked up on the graphics port but actually want its component
-            node = self._graphics_state.get_node(item.parentItem().uuid())
-            graphics_graph = self._graphics_state.get_graphics_graph(node.graph())
-            self._graphics_state.set_active_graph(graphics_graph)
+            if item.child_ports_layout().isVisible():
+                item.child_ports_layout().hide()
+            else:
+                item.child_ports_layout().show()
         else:
             super().mouseDoubleClickEvent(event)
 

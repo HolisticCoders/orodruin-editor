@@ -99,6 +99,9 @@ class GraphicsGraph(QGraphicsScene):
 
         self.setBackgroundBrush(self._background_color)
 
+    def get_virtual_port(self, uuid: UUID) -> GraphicsPort:
+        return self._virtual_graphics_ports[uuid]
+
     def _create_input_output_nodes(self) -> None:
         self._input_graphics_node = GraphicsNode(self._graphics_state, uuid4(), "Input")
         self.addItem(self._input_graphics_node)
@@ -116,10 +119,23 @@ class GraphicsGraph(QGraphicsScene):
             graphics_node = self._output_graphics_node
             direction = PortDirection.input
 
+        parent_port = port.parent_port()
+        if parent_port:
+            parent_port_id = parent_port.uuid()
+        else:
+            parent_port_id = None
+
         graphics_port = GraphicsPort(
-            self._graphics_state, port.uuid(), port.name(), direction, port.type()
+            self._graphics_state,
+            port.uuid(),
+            port.name(),
+            direction,
+            port.type(),
+            parent_port_id,
+            True,
         )
         graphics_node.register_graphics_port(graphics_port)
+
         self._virtual_graphics_ports[port.uuid()] = graphics_port
 
     def uuid(self) -> UUID:

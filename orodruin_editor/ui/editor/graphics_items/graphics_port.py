@@ -6,24 +6,30 @@ from uuid import UUID
 
 from orodruin.core import PortDirection, PortType
 from orodruin.core.port.port import Port, PortLike
-from PySide2.QtCore import QPointF, QRectF, Qt
+from PySide2.QtCore import QPointF, QRect, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 from orodruin_editor.ui.editor.graphics_items.graphics_socket import GraphicsSocket
+from orodruin_editor.ui.editor.graphics_layouts import (
+    LayoutItem,
+    VerticalGraphicsLayout,
+)
 
 if TYPE_CHECKING:
     from ..graphics_state import GraphicsState
 
 
 @dataclass
-class GraphicsPort(QGraphicsItem):
+class GraphicsPort(LayoutItem):
 
     _graphics_state: GraphicsState
     _uuid: UUID
     _name: str
     _direction: PortDirection
     _port_type: PortType
+    _parent_port_id: Optional[UUID] = None
+    _is_virtual: bool = False
     _parent: Optional[QGraphicsItem] = None
 
     _height: int = field(init=False, default=25)
@@ -39,6 +45,8 @@ class GraphicsPort(QGraphicsItem):
 
     _graphics_socket: GraphicsSocket = field(init=False)
 
+    _child_ports_layout: VerticalGraphicsLayout = field(init=False)
+
     @classmethod
     def from_port(
         cls,
@@ -46,12 +54,17 @@ class GraphicsPort(QGraphicsItem):
         port: Port,
         parent: Optional[QGraphicsItem] = None,
     ) -> GraphicsPort:
+        if port.parent_port():
+            parent_port_id = port.parent_port().uuid()
+        else:
+            parent_port_id = None
         graphics_port = cls(
             graphics_state,
             port.uuid(),
             port.name(),
             port.direction(),
             port.type(),
+            parent_port_id,
             parent,
         )
         port.name_changed.subscribe(graphics_port.set_name)
@@ -70,6 +83,10 @@ class GraphicsPort(QGraphicsItem):
         self._graphics_socket.moveBy(
             self.socket_position().x(), self.socket_position().y()
         )
+
+        self._child_ports_layout = VerticalGraphicsLayout(self)
+        self._child_ports_layout.setPos(0, self._height)
+        self._child_ports_layout.hide()
 
     def uuid(self) -> UUID:
         return self._uuid
@@ -90,14 +107,25 @@ class GraphicsPort(QGraphicsItem):
         """Return the type of the graphics port."""
         return self._port_type
 
+    def is_virtual(self) -> bool:
+        return self._is_virtual
+
     def width(self) -> int:
         return self._width
 
     def height(self) -> int:
         return self._height
 
+    def parent_port(self) -> Optional[GraphicsPort]:
+        if self._parent_port_id:
+            return self._graphics_state.get_graphics_port(self._parent_port_id)
+        return None
+
     def graphics_socket(self) -> GraphicsSocket:
         return self._graphics_socket
+
+    def child_ports_layout(self) -> VerticalGraphicsLayout:
+        return self._child_ports_layout
 
     def socket_position(self) -> QPointF:
         """Local position of the Port's socket"""
@@ -108,12 +136,19 @@ class GraphicsPort(QGraphicsItem):
         )
         return QPointF(
             horizontal_offset,
-            self.height() / 2,
+            self._height / 2,
         )
 
     def scene_socket_position(self) -> QPointF:
         """Global position of the Port's socket, used to attach Connections to."""
         return self.scenePos() + self.socket_position()
+
+    def effective_bounding_rect(self) -> QRectF:
+        width = self.width()
+        height = (
+            self._height + self._child_ports_layout.effective_bounding_rect().height()
+        )
+        return QRect(0, 0, width, height)
 
     def boundingRect(self) -> QRectF:
         return QRectF(
@@ -137,12 +172,17 @@ class GraphicsPort(QGraphicsItem):
             self.name(),
         )
 
+        padding = (
+            self._horizontal_text_padding
+            if not self._parent_port_id
+            else self._horizontal_text_padding * 2
+        )
         horizontal_offset = (
-            self._port_offset + self._horizontal_text_padding
+            self._port_offset + padding
             if self.direction() is PortDirection.input
             else self.width()
             - path_name.boundingRect().width()
-            - self._horizontal_text_padding
+            - padding
             - self._port_offset
         )
         path_name.translate(

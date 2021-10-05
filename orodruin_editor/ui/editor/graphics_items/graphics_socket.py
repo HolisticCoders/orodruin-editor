@@ -21,6 +21,7 @@ class PortColor(Enum):
     Matrix4 = QColor("#cc6666")
     Vector2 = QColor("#b5bd68")
     Vector3 = QColor("#b5bd68")
+    Quaternion = QColor("#b294bb")
     bool = QColor("#de935f")
     float = QColor("#8abeb7")
     int = QColor("#81a2be")
