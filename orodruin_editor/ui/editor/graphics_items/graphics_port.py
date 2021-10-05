@@ -6,18 +6,22 @@ from uuid import UUID
 
 from orodruin.core import PortDirection, PortType
 from orodruin.core.port.port import Port, PortLike
-from PySide2.QtCore import QPointF, QRectF, Qt
+from PySide2.QtCore import QPointF, QRect, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 
 from orodruin_editor.ui.editor.graphics_items.graphics_socket import GraphicsSocket
+from orodruin_editor.ui.editor.graphics_layouts import (
+    LayoutItem,
+    VerticalGraphicsLayout,
+)
 
 if TYPE_CHECKING:
     from ..graphics_state import GraphicsState
 
 
 @dataclass
-class GraphicsPort(QGraphicsItem):
+class GraphicsPort(LayoutItem):
 
     _graphics_state: GraphicsState
     _uuid: UUID
@@ -39,6 +43,8 @@ class GraphicsPort(QGraphicsItem):
     _name_font: QFont = field(init=False)
 
     _graphics_socket: GraphicsSocket = field(init=False)
+
+    _child_ports_layout: VerticalGraphicsLayout = field(init=False)
 
     @classmethod
     def from_port(
@@ -77,6 +83,10 @@ class GraphicsPort(QGraphicsItem):
             self.socket_position().x(), self.socket_position().y()
         )
 
+        self._child_ports_layout = VerticalGraphicsLayout(self)
+        self._child_ports_layout.setPos(0, self._height)
+        self._child_ports_layout.hide()
+
     def uuid(self) -> UUID:
         return self._uuid
 
@@ -102,8 +112,16 @@ class GraphicsPort(QGraphicsItem):
     def height(self) -> int:
         return self._height
 
+    def parent_port(self) -> Optional[GraphicsPort]:
+        if self._parent_port_id:
+            return self._graphics_state.get_graphics_port(self._parent_port_id)
+        return None
+
     def graphics_socket(self) -> GraphicsSocket:
         return self._graphics_socket
+
+    def child_ports_layout(self) -> VerticalGraphicsLayout:
+        return self._child_ports_layout
 
     def socket_position(self) -> QPointF:
         """Local position of the Port's socket"""
@@ -114,12 +132,19 @@ class GraphicsPort(QGraphicsItem):
         )
         return QPointF(
             horizontal_offset,
-            self.height() / 2,
+            self._height / 2,
         )
 
     def scene_socket_position(self) -> QPointF:
         """Global position of the Port's socket, used to attach Connections to."""
         return self.scenePos() + self.socket_position()
+
+    def effective_bounding_rect(self) -> QRectF:
+        width = self.width()
+        height = (
+            self._height + self._child_ports_layout.effective_bounding_rect().height()
+        )
+        return QRect(0, 0, width, height)
 
     def boundingRect(self) -> QRectF:
         return QRectF(
