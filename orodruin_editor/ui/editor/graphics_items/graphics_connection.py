@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union
 from uuid import UUID
 
 from orodruin.core.connection import Connection, ConnectionLike
-from PySide2.QtCore import QPointF, Qt
+from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import (
     QGraphicsItem,
@@ -129,6 +129,19 @@ class GraphicsConnection(QGraphicsPathItem):
         path.lineTo(c)
         path.lineTo(d)
         self.setPath(path)
+
+    def boundingRect(self) -> QRectF:
+
+        source_pos = self.source_position()
+        target_pos = self.target_position()
+        source_target_vector = target_pos - source_pos
+
+        x = source_pos.x()
+        y = source_pos.y()
+        width = source_target_vector.x()
+        height = source_target_vector.y()
+
+        return QRectF(x, y, width, height)
 
     def paint(
         self,
