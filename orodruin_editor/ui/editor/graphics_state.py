@@ -100,7 +100,9 @@ class GraphicsState:
 
         return graphics_port
 
-    def get_graphics_connection(self, connection: GraphicsConnectionLike) -> GraphicsPort:
+    def get_graphics_connection(
+        self, connection: GraphicsConnectionLike
+    ) -> GraphicsPort:
         """Return a registered graphics connection from a GraphicsConnectionLike object."""
         if isinstance(connection, UUID):
             graphics_connection = self._graphics_connections[connection]
@@ -112,7 +114,6 @@ class GraphicsState:
             raise TypeError
 
         return graphics_connection
-
 
     def get_graph(self, graph: GraphicsGraphLike) -> Graph:
         """Return a registered graph from a GraphicsGraphLike object."""
@@ -156,6 +157,10 @@ class GraphicsState:
         """Create a graphics node and register it to the graphics state."""
         graphics_node = GraphicsNode.from_node(self, node)
         self._graphics_nodes[node.uuid()] = graphics_node
+
+        node_pos = self._view.mapToScene(self._view.viewport().rect().center())
+        graphics_node.setPos(node_pos)
+
         logger.debug("Created graphics node %s.", node.uuid())
         return graphics_node
 
