@@ -97,6 +97,7 @@ class GraphicsGraph(QGraphicsScene):
             self._height,
         )
 
+        self.selectionChanged.connect(self._on_selection_changed)
         self.setBackgroundBrush(self._background_color)
 
     def get_virtual_port(self, uuid: UUID) -> GraphicsPort:
@@ -193,6 +194,15 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_connections.remove(connection.uuid())
         self.removeItem(graphics_connection)
         logger.debug("Unregistered graphics connection %s.", connection.uuid())
+
+    def _on_selection_changed(self) -> None:
+        selected_nodes = [
+            item.uuid()
+            for item in self.selectedItems()
+            if isinstance(item, GraphicsNode)
+        ]
+
+        self._graphics_state.selection_changed.emit(selected_nodes)
 
     def drawBackground(
         self,

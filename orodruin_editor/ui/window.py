@@ -59,6 +59,9 @@ class OrodruinWindow(QMainWindow):
         self._node_list_view.setModel(self._node_list_model)
         dock.setWidget(self._node_list_view)
 
+    def graphics_state(self) -> GraphicsState:
+        return self._graphics_state
+
     def _export_node(self):
         selection = self._view.scene().selectedItems()
         if not selection:

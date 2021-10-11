@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, List
 from uuid import UUID
 
 from orodruin.core import Connection, Graph, Node, Port, State
+from orodruin.core.signal import Signal
 
 from .graphics_graph import GraphicsGraph, GraphicsGraphLike
 from .graphics_items.graphics_connection import (
@@ -27,6 +28,7 @@ class GraphicsState:
     _state: State
     _view: GraphicsView
 
+    selection_changed: Signal[List[UUID]] = field(init=False, default_factory=Signal)
     _active_graph: GraphicsGraph = field(init=False)
     _root_graph: GraphicsGraph = field(init=False)
 
