@@ -140,9 +140,9 @@ class GraphicsNode(QGraphicsItem):
 
         logger.debug("Registered graphics port %s.", graphics_port.uuid())
 
-    def unregister_graphics_port(self, port: Port) -> None:
-        graphics_port = self._graphics_state.get_graphics_port(port)
-        self._graphics_ports.remove(port.uuid())
+    def unregister_graphics_port(self, graphics_port: GraphicsPortLike) -> None:
+        graphics_port = self._graphics_state.get_graphics_port(graphics_port)
+        self._graphics_ports.remove(graphics_port.uuid())
         graphics_port.parentItem().remove_item(graphics_port)
         logger.debug("Unregistered graphics port %s.", graphics_port.uuid())
 

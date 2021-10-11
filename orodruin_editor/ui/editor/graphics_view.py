@@ -18,6 +18,7 @@ from PySide2.QtGui import (
 )
 from PySide2.QtWidgets import QGraphicsView, QInputDialog, QMenu, QWidget
 
+from orodruin_editor.ui.editor.dialogs.create_port_dialog import CreatePortDialog
 from orodruin_editor.ui.editor.graphics_items.graphics_node_name import GraphicsNodeName
 
 from .graphics_items.graphics_connection import GraphicsConnection
@@ -291,9 +292,24 @@ class GraphicsView(QGraphicsView):
 
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
         item = self.itemAt(event.pos())
-        if isinstance(item, GraphicsPort):
+        if isinstance(item, GraphicsNode):
+            self.on_node_context_menu_event(item, event)
+        elif isinstance(item, GraphicsPort):
             self.on_port_context_menu_event(item, event)
         return super().contextMenuEvent(event)
+
+    def on_node_context_menu_event(
+        self,
+        graphics_node: GraphicsPort,
+        event: QContextMenuEvent,
+    ):
+        """Create the port context menu."""
+        context_menu = QMenu(self)
+        create_port_action = context_menu.addAction("Create Port")
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+
+        if action == create_port_action:
+            self.on_create_port(graphics_node)
 
     def on_port_context_menu_event(
         self,
@@ -311,20 +327,41 @@ class GraphicsView(QGraphicsView):
         elif action == delete_port_action:
             self.on_delete_port(graphics_port)
 
+    def on_create_port(self, graphics_node: GraphicsNode):
+
+        create_port_dialog = CreatePortDialog()
+        return_code = create_port_dialog.exec_()
+
+        if return_code:
+            name = create_port_dialog.port_name()
+            direction = create_port_dialog.port_direction()
+            port_type = create_port_dialog.port_type()
+            orodruin.commands.CreatePort(
+                self._graphics_state.state(),
+                graphics_node.uuid(),
+                name,
+                direction,
+                port_type,
+            ).do()
+
     def on_rename_port(self, graphics_port: GraphicsPort):
         """Rename the port."""
         port = self._graphics_state.state().port_from_portlike(graphics_port.uuid())
+
         rename_port_dialog = QInputDialog()
         rename_port_dialog.setWindowTitle("Rename Port")
         rename_port_dialog.setLabelText("Enter New Port Name")
         rename_port_dialog.setTextValue(port.name())
-        rename_port_dialog.exec_()
-        new_name = rename_port_dialog.textValue()
-        orodruin.commands.RenamePort(
-            self._graphics_state.state(),
-            port,
-            new_name,
-        ).do()
+
+        return_code = rename_port_dialog.exec_()
+
+        if return_code:
+            new_name = rename_port_dialog.textValue()
+            orodruin.commands.RenamePort(
+                self._graphics_state.state(),
+                port,
+                new_name,
+            ).do()
 
     def on_delete_port(self, graphics_port: GraphicsPort) -> None:
         orodruin.commands.DeletePort(

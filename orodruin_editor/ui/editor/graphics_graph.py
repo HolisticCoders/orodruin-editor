@@ -73,8 +73,8 @@ class GraphicsGraph(QGraphicsScene):
             graph.parent_node().port_registered.subscribe(
                 graphics_graph._create_virtual_port
             )
-            graph.parent_node().port_registered.subscribe(
-                graphics_graph._create_virtual_port
+            graph.parent_node().port_unregistered.subscribe(
+                graphics_graph._delete_virtual_port
             )
 
         return graphics_graph
@@ -141,6 +141,17 @@ class GraphicsGraph(QGraphicsScene):
         graphics_node.register_graphics_port(graphics_port)
 
         self._virtual_graphics_ports[port.uuid()] = graphics_port
+
+    def _delete_virtual_port(self, port: Port) -> None:
+        if port.direction() is PortDirection.input:
+            graphics_node = self._input_graphics_node
+        else:
+            graphics_node = self._output_graphics_node
+
+        graphics_port = self._virtual_graphics_ports.pop(port.uuid())
+
+        graphics_node.unregister_graphics_port(graphics_port)
+        self.removeItem(graphics_port)
 
     def uuid(self) -> UUID:
         """Return the UUID of the graph."""
