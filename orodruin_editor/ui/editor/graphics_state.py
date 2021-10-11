@@ -180,7 +180,7 @@ class GraphicsState:
 
     def delete_graphics_port(self, uuid: UUID) -> None:
         """Delete a graphics port and unregister it from the graphics state."""
-        del self._graphics_ports[uuid]
+        graphics_port = self._graphics_ports.pop(uuid)
         logger.debug("Deleted graphics port %s.", uuid)
 
     def create_graphics_connection(self, connection: Connection) -> GraphicsConnection:

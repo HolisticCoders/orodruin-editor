@@ -60,7 +60,7 @@ class GraphicsGraph(QGraphicsScene):
         graph.node_registered.subscribe(graphics_graph.register_graphics_node)
         graph.node_unregistered.subscribe(graphics_graph.unregister_graphics_node)
         graph.port_registered.subscribe(graphics_graph.register_graphics_port)
-        # graph.port_unregistered.subscribe(graphics_graph.unregister_graphics_port)
+        graph.port_unregistered.subscribe(graphics_graph.unregister_graphics_port)
         graph.connection_registered.subscribe(
             graphics_graph.register_graphics_connection
         )
@@ -70,6 +70,9 @@ class GraphicsGraph(QGraphicsScene):
 
         if graph.parent_node():
             graphics_graph._create_input_output_nodes()
+            graph.parent_node().port_registered.subscribe(
+                graphics_graph._create_virtual_port
+            )
             graph.parent_node().port_registered.subscribe(
                 graphics_graph._create_virtual_port
             )
@@ -163,6 +166,13 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_ports.append(port.uuid())
         self.addItem(graphics_port)
         logger.debug("Registered graphics port %s.", port.path())
+
+    def unregister_graphics_port(self, port: Port) -> None:
+        """Register a graphics port from the graph."""
+        graphics_port = self._graphics_state.get_graphics_port(port)
+        self._graphics_ports.remove(port.uuid())
+        self.removeItem(graphics_port)
+        logger.debug("Unregistered graphics port %s.", port.path())
 
     def register_graphics_connection(self, connection: Connection):
         """Register an existing graphics connection to the graph."""

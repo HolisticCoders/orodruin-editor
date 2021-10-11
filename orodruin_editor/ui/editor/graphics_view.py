@@ -303,10 +303,13 @@ class GraphicsView(QGraphicsView):
         """Create the port context menu."""
         context_menu = QMenu(self)
         rename_port_action = context_menu.addAction("Rename Port")
+        delete_port_action = context_menu.addAction("Delete Port")
         action = context_menu.exec_(self.mapToGlobal(event.pos()))
 
         if action == rename_port_action:
             self.on_rename_port(graphics_port)
+        elif action == delete_port_action:
+            self.on_delete_port(graphics_port)
 
     def on_rename_port(self, graphics_port: GraphicsPort):
         """Rename the port."""
@@ -321,4 +324,9 @@ class GraphicsView(QGraphicsView):
             self._graphics_state.state(),
             port,
             new_name,
+        ).do()
+
+    def on_delete_port(self, graphics_port: GraphicsPort) -> None:
+        orodruin.commands.DeletePort(
+            self._graphics_state.state(), graphics_port.uuid()
         ).do()

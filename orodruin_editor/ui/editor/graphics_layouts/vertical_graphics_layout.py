@@ -28,6 +28,9 @@ class VerticalGraphicsLayout(LayoutItem):
         item.setParentItem(self)
         self.reorder_children()
 
+    def remove_item(self, item: LayoutItem):
+        self._children.remove(item)
+
     def reorder_children(self):
         y = 0
         for child in self._children:

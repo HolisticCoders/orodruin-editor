@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from uuid import UUID
 
 from orodruin.core.node import Node, NodeLike
-from orodruin.core.port.port import PortDirection
+from orodruin.core.port.port import Port, PortDirection, PortLike
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
@@ -57,7 +57,7 @@ class GraphicsNode(QGraphicsItem):
     ) -> GraphicsNode:
         graphics_node = cls(graphics_state, node.uuid(), node.name(), parent)
         node.port_registered.subscribe(graphics_node.register_graphics_port)
-        # node.port_unregistered.subscribe(graphics_node.register_graphics_port)
+        node.port_unregistered.subscribe(graphics_node.unregister_graphics_port)
         node.name_changed.subscribe(graphics_node.set_name)
         return graphics_node
 
@@ -139,6 +139,12 @@ class GraphicsNode(QGraphicsItem):
         self._graphics_ports.append(graphics_port.uuid())
 
         logger.debug("Registered graphics port %s.", graphics_port.uuid())
+
+    def unregister_graphics_port(self, port: Port) -> None:
+        graphics_port = self._graphics_state.get_graphics_port(port)
+        self._graphics_ports.remove(port.uuid())
+        graphics_port.parentItem().remove_item(graphics_port)
+        logger.debug("Unregistered graphics port %s.", graphics_port.uuid())
 
     def boundingRect(self) -> QRectF:
         return QRectF(
