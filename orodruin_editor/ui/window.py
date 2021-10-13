@@ -73,7 +73,7 @@ class OrodruinWindow(QMainWindow):
             logger.error("Can't export a %s", type(first_item))
             return
 
-        orodruin_node = self._state.node_from_nodelike(first_item.uuid())
+        orodruin_node = self._state.get_node(first_item.uuid())
 
         orodruin.commands.ExportNode(
             orodruin_node, "orodruin-library", "orodruin", orodruin_node.name()

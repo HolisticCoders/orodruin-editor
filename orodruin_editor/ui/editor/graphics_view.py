@@ -370,7 +370,7 @@ class GraphicsView(QGraphicsView):
 
     def on_rename_port(self, graphics_port: GraphicsPort):
         """Rename the port."""
-        port = self._graphics_state.state().port_from_portlike(graphics_port.uuid())
+        port = self._graphics_state.state().get_port(graphics_port.uuid())
 
         rename_port_dialog = QInputDialog()
         rename_port_dialog.setWindowTitle("Rename Port")

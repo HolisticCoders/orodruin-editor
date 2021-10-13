@@ -120,9 +120,9 @@ class GraphicsState:
     def get_graph(self, graph: GraphicsGraphLike) -> Graph:
         """Return a registered graph from a GraphicsGraphLike object."""
         if isinstance(graph, UUID):
-            graph = self._state.graph_from_graphlike(graph)
+            graph = self._state.get_graph(graph)
         elif isinstance(graph, GraphicsGraph):
-            graph = self._state.graph_from_graphlike(graph.uuid())
+            graph = self._state.get_graph(graph.uuid())
         elif isinstance(graph, Graph):
             pass
         else:
@@ -133,9 +133,9 @@ class GraphicsState:
     def get_node(self, node: GraphicsNodeLike) -> Node:
         """Return a registered node from a GraphicsNodeLike object."""
         if isinstance(node, UUID):
-            node = self._state.node_from_nodelike(node)
+            node = self._state.get_node(node)
         elif isinstance(node, GraphicsNode):
-            node = self._state.node_from_nodelike(node.uuid())
+            node = self._state.get_node(node.uuid())
         elif isinstance(node, Node):
             pass
         else:

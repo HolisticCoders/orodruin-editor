@@ -191,7 +191,7 @@ class GraphicsGraph(QGraphicsScene):
         self._graphics_connections.append(connection.uuid())
         self.addItem(graphics_connection)
 
-        connection = self._graphics_state.state().connection_from_connectionlike(
+        connection = self._graphics_state.state().get_connection(
             graphics_connection.uuid()
         )
 
@@ -265,7 +265,7 @@ class GraphicsGraph(QGraphicsScene):
         rect: QRectF,
     ) -> None:
 
-        graph = self._graphics_state.state().graph_from_graphlike(self.uuid())
+        graph = self._graphics_state.state().get_graph(self.uuid())
         parent_node = graph.parent_node()
         if parent_node:
             path_text = str(parent_node.path())
