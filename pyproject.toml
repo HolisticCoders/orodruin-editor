@@ -14,6 +14,7 @@ orodruin = {path = "../orodruin", develop = true}
 black = "^21.7b0"
 isort = "^5.9.3"
 pylint = "^2.10.2"
+snakeviz = "^2.1.0"
 
 [tool.poetry.extras]
 PySide2 = ["PySide2"]

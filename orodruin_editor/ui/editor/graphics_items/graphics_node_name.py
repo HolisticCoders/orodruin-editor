@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Optional
 
 import orodruin.commands
 from PySide2.QtCore import QRect, QRectF, Qt
-from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
+from PySide2.QtGui import QFont, QPainter
 from PySide2.QtWidgets import (
     QGraphicsItem,
     QGraphicsProxyWidget,
+    QGraphicsTextItem,
     QLineEdit,
     QStyleOptionGraphicsItem,
     QWidget,
@@ -34,12 +35,15 @@ class GraphicsNodeName(QGraphicsItem):
         self._graphics_node = graphics_node
 
         self._name_color = Qt.white
-        self._name_brush = QBrush(self._name_color)
         self._name_font_family = "Roboto"
         self._name_font_size = 10
         self._name_font = QFont(self._name_font_family, self._name_font_size)
 
-        self._bounding_rect = QRectF(0, 0, 0, 0)
+        self._name_item = QGraphicsTextItem(self._name)
+        self._name_item.setParentItem(self)
+        self._name_item.setFont(self._name_font)
+        self._name_item.setDefaultTextColor(self._name_color)
+        self._name_item.setPos(0, -self._name_item.boundingRect().height())
 
         self._proxy_widget = QGraphicsProxyWidget(self)
         self._line_edit = QLineEdit(self._graphics_node.name())
@@ -82,10 +86,14 @@ class GraphicsNodeName(QGraphicsItem):
         ).do()
 
     def name(self) -> str:
-        return self._graphics_node.name()
+        return self._name
+
+    def set_name(self, name: str) -> None:
+        self._name = name
+        self._name_item.setPlainText(name)
 
     def boundingRect(self) -> QRectF:
-        return self._bounding_rect
+        return self._name_item.boundingRect()
 
     def paint(
         self,
@@ -93,16 +101,4 @@ class GraphicsNodeName(QGraphicsItem):
         option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
         widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
-
-        # Name
-        path_name = QPainterPath()
-        path_name.addText(
-            0,
-            -5,
-            self._name_font,
-            self.name(),
-        )
-        self._bounding_rect = path_name.boundingRect()
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self._name_brush)
-        painter.drawPath(path_name)
+        return

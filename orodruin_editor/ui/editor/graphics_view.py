@@ -16,7 +16,13 @@ from PySide2.QtGui import (
     QPainter,
     QWheelEvent,
 )
-from PySide2.QtWidgets import QGraphicsView, QInputDialog, QMenu, QWidget
+from PySide2.QtWidgets import (
+    QGraphicsTextItem,
+    QGraphicsView,
+    QInputDialog,
+    QMenu,
+    QWidget,
+)
 
 from orodruin_editor.ui.editor.dialogs.create_port_dialog import CreatePortDialog
 from orodruin_editor.ui.editor.graphics_items.graphics_node_name import GraphicsNodeName
@@ -110,6 +116,10 @@ class GraphicsView(QGraphicsView):
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         item = self.itemAt(event.pos())
+
+        if isinstance(item, QGraphicsTextItem):
+            item = item.parentItem()
+
         if self._temporary_connection:
             if isinstance(item, GraphicsSocket):
                 self._temporary_connection.mouse_position = (
@@ -137,6 +147,10 @@ class GraphicsView(QGraphicsView):
     def on_left_mouse_pressed(self, event: QMouseEvent):
         """Handle left mouse button pressed event."""
         item = self.itemAt(event.pos())
+
+        if isinstance(item, QGraphicsTextItem):
+            item = item.parentItem()
+
         if isinstance(item, GraphicsSocket):
             if item.direction() == PortDirection.output:
                 source = item._graphics_port
@@ -175,6 +189,9 @@ class GraphicsView(QGraphicsView):
     def on_left_mouse_released(self, event: QMouseEvent):
         """Handle left mouse button released event."""
         item = self.itemAt(event.pos())
+
+        if isinstance(item, QGraphicsTextItem):
+            item = item.parentItem()
 
         if isinstance(item, (GraphicsSocket, GraphicsPort)):
             if self._temporary_connection:
@@ -224,6 +241,9 @@ class GraphicsView(QGraphicsView):
     def on_left_mouse_double_clicked(self, event: QMouseEvent):
         """Handle left mouse button double click event."""
         item = self.itemAt(event.pos())
+
+        if isinstance(item, QGraphicsTextItem):
+            item = item.parentItem()
 
         if item is None:
             graphics_graph = self._graphics_state.active_graph()
@@ -292,6 +312,10 @@ class GraphicsView(QGraphicsView):
 
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
         item = self.itemAt(event.pos())
+
+        if isinstance(item, QGraphicsTextItem):
+            item = item.parentItem()
+
         if isinstance(item, GraphicsNode):
             self.on_node_context_menu_event(item, event)
         elif isinstance(item, GraphicsPort):

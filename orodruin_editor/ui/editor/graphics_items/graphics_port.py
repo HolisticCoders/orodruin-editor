@@ -8,7 +8,12 @@ from orodruin.core import PortDirection, PortType
 from orodruin.core.port.port import Port, PortLike
 from PySide2.QtCore import QPointF, QRect, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
-from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
+from PySide2.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsTextItem,
+    QStyleOptionGraphicsItem,
+    QWidget,
+)
 
 from orodruin_editor.ui.editor.graphics_items.graphics_socket import GraphicsSocket
 from orodruin_editor.ui.editor.graphics_layouts import (
@@ -38,12 +43,12 @@ class GraphicsPort(LayoutItem):
     _port_offset: int = field(init=False, default=0)
 
     _name_color: QColor = field(init=False)
-    _name_brush: QBrush = field(init=False)
     _name_font_family: str = field(init=False, default="Roboto")
     _name_font_size: int = field(init=False, default=10)
     _name_font: QFont = field(init=False)
 
     _graphics_socket: GraphicsSocket = field(init=False)
+    _name_item: QGraphicsTextItem = field(init=False)
 
     _child_ports_layout: VerticalGraphicsLayout = field(init=False)
 
@@ -75,18 +80,45 @@ class GraphicsPort(LayoutItem):
     ) -> None:
         super().__init__(parent=self._parent)
 
-        self._name_color = Qt.white
-        self._name_brush = QBrush(self._name_color)
-        self._name_font = QFont(self._name_font_family, self._name_font_size)
-
         self._graphics_socket = GraphicsSocket(self)
         self._graphics_socket.moveBy(
             self.socket_position().x(), self.socket_position().y()
         )
 
+        self._create_name_item()
+
         self._child_ports_layout = VerticalGraphicsLayout(self)
         self._child_ports_layout.setPos(0, self._height)
         self._child_ports_layout.hide()
+
+    def _create_name_item(self) -> None:
+        self._name_color = Qt.white
+        self._name_font = QFont(self._name_font_family, self._name_font_size)
+
+        self._name_item = QGraphicsTextItem(self._name)
+        self._name_item.setParentItem(self)
+
+        self._name_item.setFont(self._name_font)
+        self._name_item.setDefaultTextColor(self._name_color)
+
+        padding = (
+            self._horizontal_text_padding
+            if not self._parent_port_id
+            else self._horizontal_text_padding * 2
+        )
+        horizontal_offset = (
+            self._port_offset + padding
+            if self.direction() is PortDirection.input
+            else self.width()
+            - self._name_item.boundingRect().width()
+            - padding
+            - self._port_offset
+        )
+        self._name_item.setPos(
+            horizontal_offset,
+            0
+            # -2 + self._name_font.pointSize() / 2.0 + self.height() / 2,
+        )
 
     def uuid(self) -> UUID:
         return self._uuid
@@ -98,6 +130,7 @@ class GraphicsPort(LayoutItem):
     def set_name(self, name: str) -> None:
         """Set the name of the graphics port."""
         self._name = name
+        self._name_item.setPlainText(name)
 
     def direction(self) -> PortDirection:
         """Return the direction of the graphics port."""
@@ -164,34 +197,7 @@ class GraphicsPort(LayoutItem):
         option: QStyleOptionGraphicsItem,  # pylint: disable=unused-argument
         widget: Optional[QWidget],  # pylint: disable=unused-argument
     ) -> None:
-        path_name = QPainterPath()
-        path_name.addText(
-            0,
-            0,
-            self._name_font,
-            self.name(),
-        )
-
-        padding = (
-            self._horizontal_text_padding
-            if not self._parent_port_id
-            else self._horizontal_text_padding * 2
-        )
-        horizontal_offset = (
-            self._port_offset + padding
-            if self.direction() is PortDirection.input
-            else self.width()
-            - path_name.boundingRect().width()
-            - padding
-            - self._port_offset
-        )
-        path_name.translate(
-            horizontal_offset,
-            -2 + self._name_font.pointSize() / 2.0 + self.height() / 2,
-        )
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self._name_brush)
-        painter.drawPath(path_name)
+        return
 
 
 GraphicsPortLike = Union[GraphicsPort, PortLike]

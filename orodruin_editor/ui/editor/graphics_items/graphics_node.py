@@ -99,6 +99,7 @@ class GraphicsNode(QGraphicsItem):
     def set_name(self, name: str) -> None:
         """Set the name of the graphics node."""
         self._name = name
+        self._name_item.set_name(name)
 
     def width(self) -> int:
         """Return the width of the graphics node."""
