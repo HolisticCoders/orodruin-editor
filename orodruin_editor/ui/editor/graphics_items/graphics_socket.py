@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
+import attr
 from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QPainter, QPen
@@ -28,23 +28,23 @@ class PortColor(Enum):
     str = QColor("#f0c674")
 
 
-@dataclass
+@attr.s
 class GraphicsSocket(QGraphicsItem):
     """Graphical representation of a Socket
 
     Orodruin has no socket concept, this only exists to register events more precisely.
     """
 
-    _graphics_port: GraphicsPort
+    _graphics_port: GraphicsPort = attr.ib()
 
-    _radius: int = field(init=False, default=6)
-    _color_outline: QColor = field(init=False)
-    _color_background: QColor = field(init=False)
+    _radius: int = attr.ib(init=False, default=6)
+    _color_outline: QColor = attr.ib(init=False)
+    _color_background: QColor = attr.ib(init=False)
 
-    _pen: QPen = field(init=False)
-    _brush: QBrush = field(init=False)
+    _pen: QPen = attr.ib(init=False)
+    _brush: QBrush = attr.ib(init=False)
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         super().__init__(parent=self._graphics_port)
 
         self._color_outline = QColor("#101010")

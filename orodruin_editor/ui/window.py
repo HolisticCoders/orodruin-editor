@@ -1,7 +1,7 @@
 import logging
-from dataclasses import dataclass, field
 from typing import Optional
 
+import attr
 import orodruin.commands
 from orodruin.core import State
 from PySide2.QtCore import Qt
@@ -17,21 +17,21 @@ from .node_list_view import NodeListView
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@attr.s
 class OrodruinWindow(QMainWindow):
-    _state: State
-    _parent: Optional[QWidget] = None
+    _state: State = attr.ib()
+    _parent: Optional[QWidget] = attr.ib(default=None)
 
-    _graphics_state: GraphicsState = field(init=False)
+    _graphics_state: GraphicsState = attr.ib(init=False)
 
-    _view: GraphicsView = field(init=False)
-    _menu_bar: QMenuBar = field(init=False)
+    _view: GraphicsView = attr.ib(init=False)
+    _menu_bar: QMenuBar = attr.ib(init=False)
 
-    _export_node_action: QAction = field(init=False)
-    _node_list_model: NodeListModel = field(init=False)
-    _node_list_view: NodeListView = field(init=False)
+    _export_node_action: QAction = attr.ib(init=False)
+    _node_list_model: NodeListModel = attr.ib(init=False)
+    _node_list_view: NodeListView = attr.ib(init=False)
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         super().__init__(parent=self._parent)
 
         self.setWindowTitle("Orodruin Editor")

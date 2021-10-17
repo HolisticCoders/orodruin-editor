@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Union
 from uuid import UUID
 
+import attr
 from orodruin.core import PortDirection, PortType
 from orodruin.core.port.port import Port, PortLike
 from PySide2.QtCore import QPointF, QRect, QRectF, Qt
-from PySide2.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath
+from PySide2.QtGui import QColor, QFont, QPainter
 from PySide2.QtWidgets import (
     QGraphicsItem,
     QGraphicsTextItem,
@@ -25,32 +25,32 @@ if TYPE_CHECKING:
     from ..graphics_state import GraphicsState
 
 
-@dataclass
+@attr.s
 class GraphicsPort(LayoutItem):
 
-    _graphics_state: GraphicsState
-    _uuid: UUID
-    _name: str
-    _direction: PortDirection
-    _port_type: PortType
-    _parent_port_id: Optional[UUID] = None
-    _is_virtual: bool = False
-    _parent: Optional[QGraphicsItem] = None
+    _graphics_state: GraphicsState = attr.ib()
+    _uuid: UUID = attr.ib()
+    _name: str = attr.ib()
+    _direction: PortDirection = attr.ib()
+    _port_type: PortType = attr.ib()
+    _parent_port_id: Optional[UUID] = attr.ib(default=None)
+    _is_virtual: bool = attr.ib(default=False)
+    _parent: Optional[QGraphicsItem] = attr.ib(default=None)
 
-    _height: int = field(init=False, default=25)
-    _width: int = field(init=False, default=150)
-    _horizontal_text_padding: int = field(init=False, default=15)
-    _port_offset: int = field(init=False, default=0)
+    _height: int = attr.ib(init=False, default=25)
+    _width: int = attr.ib(init=False, default=150)
+    _horizontal_text_padding: int = attr.ib(init=False, default=15)
+    _port_offset: int = attr.ib(init=False, default=0)
 
-    _name_color: QColor = field(init=False)
-    _name_font_family: str = field(init=False, default="Roboto")
-    _name_font_size: int = field(init=False, default=10)
-    _name_font: QFont = field(init=False)
+    _name_color: QColor = attr.ib(init=False)
+    _name_font_family: str = attr.ib(init=False, default="Roboto")
+    _name_font_size: int = attr.ib(init=False, default=10)
+    _name_font: QFont = attr.ib(init=False)
 
-    _graphics_socket: GraphicsSocket = field(init=False)
-    _name_item: QGraphicsTextItem = field(init=False)
+    _graphics_socket: GraphicsSocket = attr.ib(init=False)
+    _name_item: QGraphicsTextItem = attr.ib(init=False)
 
-    _child_ports_layout: VerticalGraphicsLayout = field(init=False)
+    _child_ports_layout: VerticalGraphicsLayout = attr.ib(init=False)
 
     @classmethod
     def from_port(
@@ -75,7 +75,7 @@ class GraphicsPort(LayoutItem):
         port.name_changed.subscribe(graphics_port.set_name)
         return graphics_port
 
-    def __post_init__(
+    def __attrs_post_init__(
         self,
     ) -> None:
         super().__init__(parent=self._parent)
