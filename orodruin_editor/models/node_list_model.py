@@ -1,15 +1,15 @@
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional
 
+import attr
 from orodruin.core import LibraryManager
 from PySide2.QtCore import QAbstractListModel, QModelIndex, QObject, Qt
 
 
-@dataclass
+@attr.s
 class NodeItem:
-    path: Path
-    library_name: str
+    path: Path = attr.ib()
+    library_name: str = attr.ib()
 
 
 class NodeListModel(QAbstractListModel):

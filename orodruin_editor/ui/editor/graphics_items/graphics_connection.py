@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Union
 from uuid import UUID
 
+import attr
 from orodruin.core.connection import Connection, ConnectionLike
 from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPen
@@ -19,20 +19,20 @@ if TYPE_CHECKING:
     from .graphics_port import GraphicsPort
 
 
-@dataclass
+@attr.s
 class GraphicsConnection(QGraphicsPathItem):
-    _graphics_state: GraphicsState
-    _uuid: UUID
+    _graphics_state: GraphicsState = attr.ib()
+    _uuid: UUID = attr.ib()
 
-    _source_graphics_port: Optional[GraphicsPort] = None
-    _target_graphics_port: Optional[GraphicsPort] = None
-    _parent: Optional[QGraphicsItem] = None
+    _source_graphics_port: Optional[GraphicsPort] = attr.ib(default=None)
+    _target_graphics_port: Optional[GraphicsPort] = attr.ib(default=None)
+    _parent: Optional[QGraphicsItem] = attr.ib(default=None)
 
-    _mouse_position: QPointF = field(init=False)
+    _mouse_position: QPointF = attr.ib(init=False)
 
-    _gradient: QLinearGradient = field(init=False)
-    _unselected_pen: QPen = field(init=False)
-    _selected_pen: QPen = field(init=False)
+    _gradient: QLinearGradient = attr.ib(init=False)
+    _unselected_pen: QPen = attr.ib(init=False)
+    _selected_pen: QPen = attr.ib(init=False)
 
     @classmethod
     def from_connection(
@@ -50,10 +50,10 @@ class GraphicsConnection(QGraphicsPathItem):
             connection.uuid(),
             source_graphics_port,
             target_graphics_port,
-            _parent=parent,
+            parent=parent,
         )
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         super().__init__(parent=self._parent)
 
         self._mouse_position = QPointF(0, 0)

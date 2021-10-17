@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict, List
 from uuid import UUID
 
+import attr
 from orodruin.core import Connection, Graph, Node, Port, State
 from orodruin.core.signal import Signal
 
@@ -23,25 +23,23 @@ if TYPE_CHECKING:
     from .graphics_view import GraphicsView
 
 
-@dataclass
+@attr.s
 class GraphicsState:
-    _state: State
-    _view: GraphicsView
+    _state: State = attr.ib()
+    _view: GraphicsView = attr.ib()
 
-    selection_changed: Signal[List[UUID]] = field(init=False, default_factory=Signal)
-    _active_graph: GraphicsGraph = field(init=False)
-    _root_graph: GraphicsGraph = field(init=False)
+    selection_changed: Signal[List[UUID]] = attr.ib(init=False, factory=Signal)
+    _active_graph: GraphicsGraph = attr.ib(init=False)
+    _root_graph: GraphicsGraph = attr.ib(init=False)
 
-    _graphics_graphs: Dict[UUID, GraphicsGraph] = field(
-        init=False, default_factory=dict
-    )
-    _graphics_nodes: Dict[UUID, GraphicsNode] = field(init=False, default_factory=dict)
-    _graphics_ports: Dict[UUID, GraphicsPort] = field(init=False, default_factory=dict)
-    _graphics_connections: Dict[UUID, GraphicsConnection] = field(
-        init=False, default_factory=dict
+    _graphics_graphs: Dict[UUID, GraphicsGraph] = attr.ib(init=False, factory=dict)
+    _graphics_nodes: Dict[UUID, GraphicsNode] = attr.ib(init=False, factory=dict)
+    _graphics_ports: Dict[UUID, GraphicsPort] = attr.ib(init=False, factory=dict)
+    _graphics_connections: Dict[UUID, GraphicsConnection] = attr.ib(
+        init=False, factory=dict
     )
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         self._state.graph_created.subscribe(self.create_graphics_graph)
         self._state.graph_deleted.subscribe(self.delete_graphics_graph)
         self._state.node_created.subscribe(self.create_graphics_node)

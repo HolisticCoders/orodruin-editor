@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 
+import attr
 import orodruin.commands
 from orodruin.core.port.port import PortDirection
 from PySide2.QtCore import QEvent, Qt
@@ -39,24 +39,24 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@attr.s
 class GraphicsView(QGraphicsView):
     """GraphicsView for the orodruin editor."""
 
-    _parent: Optional[QWidget] = None
+    _parent: Optional[QWidget] = attr.ib(default=None)
 
-    _graphics_state: GraphicsState = field(init=False)
+    _graphics_state: GraphicsState = attr.ib(init=False)
 
-    _zoom_in_factor: float = field(init=False, default=1.25)
-    _font_family: str = field(init=False, default="Roboto")
-    _font_size: int = field(init=False, default=20)
-    _path_font: QFont = field(init=False)
+    _zoom_in_factor: float = attr.ib(init=False, default=1.25)
+    _font_family: str = attr.ib(init=False, default="Roboto")
+    _font_size: int = attr.ib(init=False, default=20)
+    _path_font: QFont = attr.ib(init=False)
 
-    _temporary_connection: Optional[GraphicsConnection] = field(
+    _temporary_connection: Optional[GraphicsConnection] = attr.ib(
         init=False, default=None
     )
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         super().__init__(parent=self._parent)
 
         self._path_font = QFont(self._font_family, self._font_size)
@@ -161,8 +161,8 @@ class GraphicsView(QGraphicsView):
             self._temporary_connection = GraphicsConnection(
                 self._graphics_state,
                 uuid4(),
-                _source_graphics_port=source,
-                _target_graphics_port=target,
+                source_graphics_port=source,
+                target_graphics_port=target,
             )
             self._temporary_connection.mouse_position = self.mapToScene(event.pos())
             self.scene().addItem(self._temporary_connection)

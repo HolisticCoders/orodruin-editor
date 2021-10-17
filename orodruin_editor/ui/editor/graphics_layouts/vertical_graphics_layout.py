@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
 from typing import List, Optional
 
+import attr
 from PySide2.QtCore import QRectF, Qt
 from PySide2.QtGui import QBrush, QPainter
 from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
@@ -11,13 +11,13 @@ from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
 from .layout_item import LayoutItem
 
 
-@dataclass
+@attr.s
 class VerticalGraphicsLayout(LayoutItem):
-    _parent: Optional[QGraphicsItem] = None
+    _parent: Optional[QGraphicsItem] = attr.ib(default=None)
 
-    _children: List[LayoutItem] = field(init=False, default_factory=list)
+    _children: List[LayoutItem] = attr.ib(init=False, factory=list)
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         super().__init__(parent=self._parent)
 
         colors = [Qt.red, Qt.blue, Qt.green, Qt.yellow]

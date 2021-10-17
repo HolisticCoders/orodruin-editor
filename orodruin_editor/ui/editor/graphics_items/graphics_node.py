@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional, Union
 from uuid import UUID
 
+import attr
 from orodruin.core.node import Node, NodeLike
 from orodruin.core.port.port import Port, PortDirection, PortLike
 from PySide2.QtCore import QRectF, Qt
@@ -22,31 +22,31 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@attr.s
 class GraphicsNode(QGraphicsItem):
 
-    _graphics_state: GraphicsState
-    _uuid: UUID
-    _name: str
-    _parent: Optional[QGraphicsItem] = None
+    _graphics_state: GraphicsState = attr.ib()
+    _uuid: UUID = attr.ib()
+    _name: str = attr.ib()
+    _parent: Optional[QGraphicsItem] = attr.ib(default=None)
 
-    _graphics_ports: List[UUID] = field(init=False, default_factory=list)
+    _graphics_ports: List[UUID] = attr.ib(init=False, factory=list)
 
-    _header_height: int = field(init=False, default=30)
-    _corner_radius: float = field(init=False)
+    _header_height: int = attr.ib(init=False, default=30)
+    _corner_radius: float = attr.ib(init=False)
 
-    _header_color: QBrush = field(init=False)
-    _header_brush: QBrush = field(init=False)
+    _header_color: QBrush = attr.ib(init=False)
+    _header_brush: QBrush = attr.ib(init=False)
 
-    _background_color: QColor = field(init=False)
-    _background_brush: QBrush = field(init=False)
+    _background_color: QColor = attr.ib(init=False)
+    _background_brush: QBrush = attr.ib(init=False)
 
-    _outline_pen_default: QPen = field(init=False)
-    _outline_pen_selected: QPen = field(init=False)
+    _outline_pen_default: QPen = attr.ib(init=False)
+    _outline_pen_selected: QPen = attr.ib(init=False)
 
-    _name_item: GraphicsNodeName = field(init=False)
-    _input_port_layout: VerticalGraphicsLayout = field(init=False)
-    _output_port_layout: VerticalGraphicsLayout = field(init=False)
+    _name_item: GraphicsNodeName = attr.ib(init=False)
+    _input_port_layout: VerticalGraphicsLayout = attr.ib(init=False)
+    _output_port_layout: VerticalGraphicsLayout = attr.ib(init=False)
 
     @classmethod
     def from_node(
@@ -61,7 +61,7 @@ class GraphicsNode(QGraphicsItem):
         node.name_changed.subscribe(graphics_node.set_name)
         return graphics_node
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         super().__init__(parent=self._parent)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)

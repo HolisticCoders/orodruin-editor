@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 import math
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
+import attr
+from orodruin.core import graph
 from orodruin.core.connection import Connection
 from orodruin.core.graph import Graph, GraphLike
 from orodruin.core.node import Node
@@ -23,36 +24,34 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@attr.s
 class GraphicsGraph(QGraphicsScene):
     """Graphical representation of an Orodruin Graph."""
 
-    _graphics_state: GraphicsState
-    _uuid: UUID
-    parent: Optional[QObject] = None
+    _graphics_state: GraphicsState = attr.ib()
+    _uuid: UUID = attr.ib()
+    parent: Optional[QObject] = attr.ib(default=None)
 
-    _graphics_nodes: List[UUID] = field(init=False, default_factory=list)
-    _graphics_ports: List[UUID] = field(init=False, default_factory=list)
-    _graphics_connections: List[UUID] = field(init=False, default_factory=list)
+    _graphics_nodes: List[UUID] = attr.ib(init=False, factory=list)
+    _graphics_ports: List[UUID] = attr.ib(init=False, factory=list)
+    _graphics_connections: List[UUID] = attr.ib(init=False, factory=list)
 
-    _input_graphics_node: Optional[GraphicsNode] = field(init=False, default=None)
-    _output_graphics_node: Optional[GraphicsNode] = field(init=False, default=None)
-    _virtual_graphics_ports: Dict[GraphicsPort] = field(
-        init=False, default_factory=dict
-    )
+    _input_graphics_node: Optional[GraphicsNode] = attr.ib(init=False, default=None)
+    _output_graphics_node: Optional[GraphicsNode] = attr.ib(init=False, default=None)
+    _virtual_graphics_ports: Dict[GraphicsPort] = attr.ib(init=False, factory=dict)
 
-    _square_size: int = field(init=False, default=25)  # in pixels
-    _cell_size: int = field(init=False, default=10)  # in squares
+    _square_size: int = attr.ib(init=False, default=25)  # in pixels
+    _cell_size: int = attr.ib(init=False, default=10)  # in squares
 
-    _width: int = field(init=False, default=64000)
-    _height: int = field(init=False, default=64000)
+    _width: int = attr.ib(init=False, default=64000)
+    _height: int = attr.ib(init=False, default=64000)
 
-    _background_color: QColor = field(init=False)
-    _square_color: QColor = field(init=False)
-    _cell_color: QColor = field(init=False)
+    _background_color: QColor = attr.ib(init=False)
+    _square_color: QColor = attr.ib(init=False)
+    _cell_color: QColor = attr.ib(init=False)
 
-    _pen_square: QPen = field(init=False)
-    _pen_cell: QPen = field(init=False)
+    _pen_square: QPen = attr.ib(init=False)
+    _pen_cell: QPen = attr.ib(init=False)
 
     @classmethod
     def from_graph(cls, graphics_state: GraphicsState, graph: Graph):
@@ -79,7 +78,7 @@ class GraphicsGraph(QGraphicsScene):
 
         return graphics_graph
 
-    def __post_init__(
+    def __attrs_post_init__(
         self,
     ) -> None:
         super().__init__(parent=self.parent)
@@ -175,14 +174,24 @@ class GraphicsGraph(QGraphicsScene):
         """Register an existing graphics port to the graph."""
         graphics_port = self._graphics_state.get_graphics_port(port)
         self._graphics_ports.append(port.uuid())
-        self.addItem(graphics_port)
+
+        # the port might have already been added to the graph when its parent node
+        # was moved to the graph.
+        if graphics_port not in self.items():
+            self.addItem(graphics_port)
+
         logger.debug("Registered graphics port %s.", port.path())
 
     def unregister_graphics_port(self, port: Port) -> None:
         """Register a graphics port from the graph."""
         graphics_port = self._graphics_state.get_graphics_port(port)
         self._graphics_ports.remove(port.uuid())
-        self.removeItem(graphics_port)
+
+        # the port might have already been removed from the graph when its parent node
+        # was moved to another graph.
+        if graphics_port in self.items():
+            self.removeItem(graphics_port)
+
         logger.debug("Unregistered graphics port %s.", port.path())
 
     def register_graphics_connection(self, connection: Connection):
