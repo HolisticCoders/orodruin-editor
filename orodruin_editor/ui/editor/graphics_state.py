@@ -8,6 +8,8 @@ import attr
 from orodruin.core import Connection, Graph, Node, Port, State
 from orodruin.core.signal import Signal
 
+from orodruin_editor.core import EditorDeserializer, EditorSerializer
+
 from .graphics_graph import GraphicsGraph, GraphicsGraphLike
 from .graphics_items.graphics_connection import (
     GraphicsConnection,
@@ -51,6 +53,11 @@ class GraphicsState:
 
         self._root_graph = self.create_graphics_graph(self._state.root_graph())
         self.set_active_graph(self._root_graph)
+
+        deserializer = EditorDeserializer(self)
+        serializer = EditorSerializer(self)
+        self._state.register_deserializer(deserializer)
+        self._state.register_serializer(serializer)
 
     def state(self) -> State:
         return self._state

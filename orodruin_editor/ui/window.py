@@ -76,6 +76,10 @@ class OrodruinWindow(QMainWindow):
         orodruin_node = self._state.get_node(first_item.uuid())
 
         orodruin.commands.ExportNode(
-            orodruin_node, "orodruin-library", "orodruin", orodruin_node.name()
+            self._state,
+            orodruin_node,
+            "orodruin-library",
+            "orodruin",
+            orodruin_node.name(),
         ).do()
         self._node_list_model.refresh_nodes_list()
