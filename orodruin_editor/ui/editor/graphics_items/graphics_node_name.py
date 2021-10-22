@@ -92,7 +92,13 @@ class GraphicsNodeName(QGraphicsItem):
         self._name_item.setPlainText(name)
 
     def boundingRect(self) -> QRectF:
-        return self._name_item.boundingRect()
+        name_bounding_rect = self._name_item.boundingRect()
+        return QRectF(
+            0,
+            -name_bounding_rect.height(),
+            name_bounding_rect.width(),
+            name_bounding_rect.height(),
+        )
 
     def paint(
         self,
