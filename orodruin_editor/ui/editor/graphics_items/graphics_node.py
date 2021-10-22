@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Optional, Union
+from math import floor
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 from uuid import UUID
 
 import attr
 from orodruin.core.node import Node, NodeLike
-from orodruin.core.port.port import Port, PortDirection, PortLike
-from PySide2.QtCore import QRectF, Qt
+from orodruin.core.port.port import Port, PortDirection
+from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
-from PySide2.QtWidgets import QGraphicsItem, QStyleOptionGraphicsItem, QWidget
+from PySide2.QtWidgets import (
+    QApplication,
+    QGraphicsItem,
+    QGraphicsSceneMouseEvent,
+    QStyleOptionGraphicsItem,
+    QWidget,
+)
 
 from orodruin_editor.ui.editor.graphics_layouts import VerticalGraphicsLayout
 
@@ -48,6 +55,8 @@ class GraphicsNode(QGraphicsItem):
     _input_port_layout: VerticalGraphicsLayout = attr.ib(init=False)
     _output_port_layout: VerticalGraphicsLayout = attr.ib(init=False)
 
+    _mouse_offset: QPointF = attr.ib(init=False, factory=QPointF)
+
     @classmethod
     def from_node(
         cls,
@@ -66,6 +75,7 @@ class GraphicsNode(QGraphicsItem):
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
         self._header_color = QColor("#2B6299")
         self._header_brush = QBrush(self._header_color)
@@ -210,6 +220,17 @@ class GraphicsNode(QGraphicsItem):
         painter.setPen(outline_pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path_outline.simplified())
+
+    def closest_grid_position(self, point: QPointF) -> QPointF:
+        grid_size = self.scene()._square_size
+        adjusted_x = floor(point.x() / grid_size) * grid_size
+        adjusted_y = floor(point.y() / grid_size) * grid_size
+        return QPointF(adjusted_x, adjusted_y)
+
+    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            return self.closest_grid_position(value)
+        return super().itemChange(change, value)
 
 
 GraphicsNodeLike = Union[GraphicsNode, NodeLike]
