@@ -1,16 +1,18 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Dict
 
 import attr
-from orodruin.core.deserializer import ExternalDeserializer
+from orodruin.core import Deserializer
 
 if TYPE_CHECKING:
+    from orodruin.core import Connection, Graph, Node, Port
+
     from orodruin_editor.ui.editor.graphics_state import GraphicsState
-    from orodruin.core import Node, Connection, Graph, Port
 
 
 @attr.s
-class EditorDeserializer(ExternalDeserializer):
+class EditorDeserializer(Deserializer):
     """Deserialize nodes editor state."""
 
     graphics_state: GraphicsState = attr.ib()
