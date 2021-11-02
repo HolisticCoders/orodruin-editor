@@ -17,7 +17,9 @@ if __name__ == "__main__":
     test_library_path = (
         Path(__file__).resolve().parent.parent / "orodruin" / "tests" / "TestLibrary"
     )
+    library_path = Path(__file__).resolve().parent.parent / "orodruin-library"
     LibraryManager.register_library(test_library_path)
+    LibraryManager.register_library(library_path)
 
     state = State()
     window = OrodruinWindow(state)
