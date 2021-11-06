@@ -155,10 +155,10 @@ class GraphicsState:
         logger.debug("Created graphics graph %s.", graph.uuid())
         return graphics_graph
 
-    def delete_graphics_graph(self, uuid: UUID) -> None:
+    def delete_graphics_graph(self, graph: Graph) -> None:
         """Delete a graphics graph and unregister it from the graphics state."""
-        del self._graphics_graphs[uuid]
-        logger.debug("Deleted graphics graph %s.", uuid)
+        del self._graphics_graphs[graph.uuid()]
+        logger.debug("Deleted graphics graph %s.", graph.uuid())
 
     def create_graphics_node(self, node: Node) -> GraphicsNode:
         """Create a graphics node and register it to the graphics state."""
@@ -171,10 +171,10 @@ class GraphicsState:
         logger.debug("Created graphics node %s.", node.uuid())
         return graphics_node
 
-    def delete_graphics_node(self, uuid: UUID) -> None:
+    def delete_graphics_node(self, node: Node) -> None:
         """Delete a graphics node and unregister it from the graphics state."""
-        del self._graphics_nodes[uuid]
-        logger.debug("Deleted graphics node %s.", uuid)
+        del self._graphics_nodes[node.uuid()]
+        logger.debug("Deleted graphics node %s.", node.uuid())
 
     def create_graphics_port(self, port: Port) -> GraphicsPort:
         """Create a graphics port and register it to the graphics state."""
@@ -183,10 +183,10 @@ class GraphicsState:
         logger.debug("Created graphics port %s.", port.path())
         return graphics_port
 
-    def delete_graphics_port(self, uuid: UUID) -> None:
+    def delete_graphics_port(self, port: Port) -> None:
         """Delete a graphics port and unregister it from the graphics state."""
-        graphics_port = self._graphics_ports.pop(uuid)
-        logger.debug("Deleted graphics port %s.", uuid)
+        graphics_port = self._graphics_ports.pop(port.uuid())
+        logger.debug("Deleted graphics port %s.", port.uuid())
 
     def create_graphics_connection(self, connection: Connection) -> GraphicsConnection:
         """Create a graphics connection and register it to the graphics state."""
@@ -195,7 +195,7 @@ class GraphicsState:
         logger.debug("Created graphics connection %s.", connection.uuid())
         return graphics_connection
 
-    def delete_graphics_connection(self, uuid: UUID) -> None:
+    def delete_graphics_connection(self, connection: Connection) -> None:
         """Delete a graphics connection and unregister it from the graphics state."""
-        del self._graphics_connections[uuid]
-        logger.debug("Deleted graphics connection %s.", uuid)
+        del self._graphics_connections[connection.uuid()]
+        logger.debug("Deleted graphics connection %s.", connection.uuid())
