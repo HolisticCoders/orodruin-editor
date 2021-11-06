@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class PortColor(Enum):
     """A Mapping between the port type and port colors."""
 
-    Reference = QColor("#c397d8")
+    Reference = QColor("#f0c674")
     Matrix3 = QColor("#cc6666")
     Matrix4 = QColor("#cc6666")
     Vector2 = QColor("#b5bd68")
