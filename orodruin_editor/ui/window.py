@@ -5,7 +5,15 @@ import attr
 import orodruin.commands
 from orodruin.core import State
 from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QAction, QDockWidget, QMainWindow, QMenuBar, QWidget
+from PySide2.QtWidgets import (
+    QAction,
+    QDockWidget,
+    QMainWindow,
+    QMenuBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from orodruin_editor.ui.editor.graphics_state import GraphicsState
 
@@ -54,10 +62,19 @@ class OrodruinWindow(QMainWindow):
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
+        node_list_layout = QVBoxLayout()
         self._node_list_model = NodeListModel()
         self._node_list_view = NodeListView(self._graphics_state, dock)
         self._node_list_view.setModel(self._node_list_model)
-        dock.setWidget(self._node_list_view)
+        node_list_layout.addWidget(self._node_list_view)
+
+        refresh_button = QPushButton("Reload Node List")
+        node_list_layout.addWidget(refresh_button)
+        refresh_button.clicked.connect(self._node_list_model.refresh_nodes_list)
+
+        inner_widget = QWidget(self)
+        inner_widget.setLayout(node_list_layout)
+        dock.setWidget(inner_widget)
 
     def graphics_state(self) -> GraphicsState:
         return self._graphics_state
