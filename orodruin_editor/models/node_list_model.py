@@ -27,6 +27,7 @@ class NodeListModel(QAbstractListModel):
 
     def refresh_nodes_list(self):
         """Refresh the node list."""
+        self.beginResetModel()
         self._nodes = []
         for library in LibraryManager.libraries():
             self._nodes.extend(
@@ -35,6 +36,7 @@ class NodeListModel(QAbstractListModel):
                     for node_path in library.nodes("orodruin")
                 ]
             )
+        self.endResetModel()
 
     def rowCount(
         self,
