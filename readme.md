@@ -1,6 +1,8 @@
 # Orodruin Editor
 A GUI editor for managing [Orodruin](https://github.com/HolisticCoders/orodruin) Graphs.
 
+⚠⚠⚠ Orodruin is **NOT** Production Ready but more of a Proof of Concept at this point.⚠⚠⚠
+
 # Prerequisites
 - [Poetry](https://python-poetry.org/) must be installed.
 - Python 3.7+ must be installed.
